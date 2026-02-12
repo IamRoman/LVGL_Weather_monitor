@@ -68,6 +68,10 @@ void create_ui()
 			Serial.println("Button pressed!");
 		}
 	}, LV_EVENT_ALL, NULL);
+
+	lv_obj_t *label_btn = lv_label_create(btn);
+	lv_label_set_text(label_btn, "Press");
+	lv_obj_align(label_btn, LV_ALIGN_CENTER, 0, 0);
 }
 
 void setup()
