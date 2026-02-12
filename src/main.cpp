@@ -20,6 +20,22 @@ uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
 XPT2046_Touchscreen touchscreen(TOUCH_CS, TOUCH_IRQ);
 
+void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
+{
+	uint32_t w = area->x2 - area->x1 + 1;
+	uint32_t h = area->y2 - area->y1 + 1;
+
+	// Передача даних на TFT
+	tft.startWrite();
+	tft.setAddrWindow(area->x1, area->y1, w, h);
+
+	// px_map — це просто масив кольорів у форматі LV_COLOR_DEPTH
+	tft.pushColors((uint16_t *)px_map, w * h, true);
+
+	tft.endWrite();
+
+	lv_display_flush_ready(disp); // повідомляємо LVGL, що flush завершено
+}
 
 // ===== Touch callback =====
 void touch_read(lv_indev_t *indev, lv_indev_data_t *data)
@@ -31,6 +47,9 @@ void touch_read(lv_indev_t *indev, lv_indev_data_t *data)
 				// ROTATION_90: swap and invert Y
 				int x = map(p.y, 3800, 200, 0, SCREEN_WIDTH);	 // TFT WIDTH
 				int y = map(p.x, 200, 3800, 0, SCREEN_HEIGHT); // TFT HEIGHT
+
+				// screenX = (RawX - RawX_min) * SCREEN_WIDTH / (RawX_max - RawX_min)
+				// screenY = (RawY - RawY_min) * SCREEN_HEIGHT / (RawY_max - RawY_min)
 
 				// limitations within the screen
 				if (x < 0) x = 0; if (x > SCREEN_WIDTH) x = SCREEN_WIDTH;
@@ -86,6 +105,7 @@ void setup()
     // ==== Create display with TFT_eSPI helper ====
 		lv_display_t * disp;
     disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, DRAW_BUF_SIZE);
+		lv_display_set_flush_cb(disp, disp_flush);
 		lv_display_set_rotation(disp, TFT_ROTATION);
 
 		// ==== Add touch input ====
