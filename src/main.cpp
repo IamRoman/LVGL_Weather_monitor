@@ -28,24 +28,22 @@ void touch_read(lv_indev_t *indev, lv_indev_data_t *data)
     {
         TS_Point p = touchscreen.getPoint();
 
-        // ROTATION_90: міняємо місцями та інвертуємо Y
-        int x = map(p.y, 3800, 200, 0, SCREEN_WIDTH);   // ширина TFT
-        int y = map(p.x, 200, 3800, 0, SCREEN_HEIGHT);  // висота TFT
+				// ROTATION_90: swap and invert Y
+				int x = map(p.y, 3800, 200, 0, SCREEN_WIDTH);	 // TFT WIDTH
+				int y = map(p.x, 200, 3800, 0, SCREEN_HEIGHT); // TFT HEIGHT
 
-        // обмеження в межах екрану
-        if (x < 0) x = 0; if (x > SCREEN_WIDTH) x = SCREEN_WIDTH;
+				// limitations within the screen
+				if (x < 0) x = 0; if (x > SCREEN_WIDTH) x = SCREEN_WIDTH;
         if (y < 0) y = 0; if (y > SCREEN_HEIGHT) y = SCREEN_HEIGHT;
 
         data->point.x = x;
         data->point.y = y;
         data->state = LV_INDEV_STATE_PRESSED;
 
-        Serial.print("Touch X=");
-        Serial.print(x);
-        Serial.print(" Y=");
-        Serial.println(y);
-    }
-    else
+				// Serial.print("Touch X="); Serial.print(x);
+				// Serial.print(" Y="); Serial.println(y);
+		}
+		else
     {
         data->state = LV_INDEV_STATE_RELEASED;
     }
@@ -84,15 +82,14 @@ void setup()
     // ==== Create display with TFT_eSPI helper ====
 		lv_display_t * disp;
     disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, DRAW_BUF_SIZE);
-    lv_display_set_rotation(disp, LV_DISPLAY_ROTATION_90);
+		lv_display_set_rotation(disp, TFT_ROTATION);
 
-    // ==== Add touch input ====
-    lv_indev_t *indev = lv_indev_create();
-    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
-		
-    lv_indev_set_read_cb(indev, touch_read);
+		// ==== Add touch input ====
+		lv_indev_t *indev = lv_indev_create();
+		lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
+		lv_indev_set_read_cb(indev, touch_read);
 
-    create_ui();
+		create_ui();
 }
 
 void loop()
