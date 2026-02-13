@@ -17,6 +17,7 @@ int x, y, z;
 #define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
 uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
+lv_obj_t *second_screen;
 
 XPT2046_Touchscreen touchscreen(TOUCH_CS, TOUCH_IRQ);
 
@@ -72,10 +73,15 @@ void touch_read(lv_indev_t *indev, lv_indev_data_t *data)
 void create_ui()
 {
 	lv_obj_t *screen = lv_disp_get_scr_act(NULL);
+	second_screen = lv_obj_create(NULL);
+
+	lv_obj_set_style_bg_color(screen, lv_color_make(16, 20, 39), 0);
+	lv_obj_set_style_bg_opa(screen, LV_OPA_COVER, 0);
 
 	lv_obj_t *label = lv_label_create(screen);
 	lv_label_set_text(label, "Hello world!!!");
-	lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_style_text_color(label, lv_color_make(0, 255, 0), 0);
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, -40);
 
 	lv_obj_t *btn = lv_btn_create(screen);
 	lv_obj_set_size(btn, 200, 60);
@@ -85,6 +91,7 @@ void create_ui()
 		lv_event_code_t code = lv_event_get_code(e);
 		if (code == LV_EVENT_CLICKED) {
 			Serial.println("Button pressed!");
+			lv_scr_load(second_screen);
 		}
 	}, LV_EVENT_ALL, NULL);
 
