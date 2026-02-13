@@ -1,5 +1,6 @@
 #include "screen_settings.h"
 #include "screen_home.h"
+#include "theme/colors.h"
 
 static lv_obj_t * screen;
 
@@ -14,7 +15,7 @@ void screen_settings_init(void)
 {
     screen = lv_obj_create(NULL);
 
-    lv_obj_set_style_bg_color(screen, lv_color_hex(0x2f1e1e), 0);
+    lv_obj_set_style_bg_color(screen, COLOR_BG_DARK, 0);
 
     lv_obj_t * label = lv_label_create(screen);
     lv_label_set_text(label, "SETTINGS");
