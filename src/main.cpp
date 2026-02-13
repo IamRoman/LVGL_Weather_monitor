@@ -26,16 +26,16 @@ void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 	uint32_t w = area->x2 - area->x1 + 1;
 	uint32_t h = area->y2 - area->y1 + 1;
 
-	// Передача даних на TFT
+	// Data transfer to TFT
 	tft.startWrite();
 	tft.setAddrWindow(area->x1, area->y1, w, h);
 
-	// px_map — це просто масив кольорів у форматі LV_COLOR_DEPTH
+	// px_map is simply an array of colors in LV_COLOR_DEPTH format
 	tft.pushColors((uint16_t *)px_map, w * h, true);
 
 	tft.endWrite();
 
-	lv_display_flush_ready(disp); // повідомляємо LVGL, що flush завершено
+	lv_display_flush_ready(disp); // notify LVGL that the flush is complete
 }
 
 // ===== Touch callback =====
