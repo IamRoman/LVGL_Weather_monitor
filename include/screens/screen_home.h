@@ -3,3 +3,4 @@
 
 void screen_home_init(void);
 lv_obj_t * screen_home_get(void);
+void screen_home_update();

@@ -9,8 +9,10 @@ TFT_eSPI tft = TFT_eSPI();
 
 int x, y, z;
 
-#define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
-uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+// #define DRAW_BUF_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10 * (LV_COLOR_DEPTH / 8))
+#define DRAW_BUF_SIZE (SCREEN_WIDTH * 40 * (LV_COLOR_DEPTH / 8))
+// uint32_t draw_buf[DRAW_BUF_SIZE / 4];
+lv_color_t *draw_buf;
 
 void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 {
@@ -31,9 +33,12 @@ void disp_flush(lv_display_t *disp, const lv_area_t *area, uint8_t *px_map)
 
 void display_init(void)
 {
-   // ==== Create display with TFT_eSPI helper ====
-		lv_display_t * disp;
-    disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, DRAW_BUF_SIZE);
-		lv_display_set_flush_cb(disp, disp_flush);
-		lv_display_set_rotation(disp, TFT_ROTATION);
+	draw_buf = (lv_color_t *)heap_caps_malloc(
+			SCREEN_WIDTH * 40 * sizeof(lv_color_t),
+			MALLOC_CAP_DMA);
+	// ==== Create display with TFT_eSPI helper ====
+	lv_display_t *disp;
+	disp = lv_tft_espi_create(SCREEN_WIDTH, SCREEN_HEIGHT, draw_buf, DRAW_BUF_SIZE);
+	lv_display_set_flush_cb(disp, disp_flush);
+	lv_display_set_rotation(disp, TFT_ROTATION);
 }

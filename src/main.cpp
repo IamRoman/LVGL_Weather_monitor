@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include <lvgl.h>
-
 #include "ui.h"
+#include <wifi_service.h>
+#include <wifi_widget.h>
+#include <screen_home.h>
 
 extern void display_init(void);
 extern void touch_init(void);
@@ -14,6 +16,8 @@ void setup()
 
 		display_init();
 		touch_init();
+
+		wifi_init("netis-6A6F79", "qwerty777");
 
 		ui_init();
 }
