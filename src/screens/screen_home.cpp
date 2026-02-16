@@ -2,6 +2,7 @@
 #include "screen_settings.h"
 #include "screen_forecast.h"
 #include "theme/colors.h"
+#include "digital_clock.h"
 
 static lv_obj_t * screen;
 
@@ -21,13 +22,29 @@ static void btn_forecast_event(lv_event_t * e)
                      150, 0, false);
 }
 
+static void btn_toggle_event(lv_event_t *e)
+{
+	clock_toggle_format();
+}
+
 void screen_home_init(void)
 {
     screen = lv_obj_create(NULL);
 
     lv_obj_set_style_bg_color(screen, COLOR_BG_DARK, 0);
 
-    LV_IMAGE_DECLARE(sun);
+		clock_create(screen);
+
+		lv_obj_t *btn = lv_btn_create(screen);
+		lv_obj_align(btn, LV_ALIGN_RIGHT_MID, 0, 100);
+		lv_obj_add_event_cb(btn, btn_toggle_event,
+												LV_EVENT_CLICKED, NULL);
+
+		lv_obj_t *btn_clock_label = lv_label_create(btn);
+		lv_label_set_text(btn_clock_label, "Toggle 12/24h");
+		lv_obj_center(btn_clock_label);
+
+		LV_IMAGE_DECLARE(sun);
     lv_obj_t *img1 = lv_image_create(screen);
     lv_image_set_src(img1, &sun);
     // lv_obj_set_size(img1, 40, 40);

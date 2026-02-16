@@ -20,7 +20,7 @@ void setup()
 
 void loop()
 {
-		lv_task_handler();
-    lv_tick_inc(5);
-    delay(5);
+	lv_task_handler();
+	lv_tick_inc(5);
+	delay(5);
 }
