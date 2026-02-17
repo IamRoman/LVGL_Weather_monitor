@@ -74,41 +74,73 @@ static void chart_event_cb(lv_event_t *e)
 		lv_area_t chart_area;
 		lv_obj_get_content_coords(obj, &chart_area);
 
-		// --- Ось Y ---
-		for (int i = 0; i < 5; i++)
-		{
-			int32_t val = -40 + (i * 90 / 4);
-			char buf[16];
-			lv_snprintf(buf, sizeof(buf), "%d", (int)val);
+    // Отримуємо серію (вона перша, тому індекс 0)
+    lv_chart_series_t *ser = lv_chart_get_series_next(obj, NULL);
+    if (!ser)
+      return;
 
-			int32_t y = chart_area.y2 - (i * lv_area_get_height(&chart_area) / 4);
+    // --- 1. Малюємо значення НАД ТОЧКАМИ ---
+    uint32_t point_cnt = lv_chart_get_point_count(obj);
+    for (uint32_t i = 0; i < point_cnt; i++)
+    {
+      lv_point_t p;
+      // Отримуємо координати точки i
+      lv_chart_get_point_pos_by_id(obj, ser, i, &p);
 
-			lv_area_t a;
-			a.x1 = chart_area.x1 - 45;
-			a.x2 = chart_area.x1 - 5;
-			a.y1 = y - 7;
-			a.y2 = y + 7;
-			label_dsc.text = buf;
-			label_dsc.align = LV_TEXT_ALIGN_RIGHT;
-			lv_draw_label(layer, &label_dsc, &a);
-		}
+      // Отримуємо значення Y для тексту
+      int32_t *y_array = lv_chart_get_y_array(obj, ser);
+      int32_t val = y_array[i];
 
-		// --- Ось X ---
-		const char *x_ticks[] = {"0", "3", "6", "9", "12", "15", "18", "21", "24"};
-		for (int i = 0; i < 9; i++)
-		{
-			int32_t x = chart_area.x1 + (i * lv_area_get_width(&chart_area) / 7);
+      char buf[16];
+      lv_snprintf(buf, sizeof(buf), "%d", (int)val);
 
-			lv_area_t a;
-			a.x1 = x - 20;
-			a.x2 = x + 20;
-			a.y1 = chart_area.y2 + 5;
-			a.y2 = chart_area.y2 + 25;
-			label_dsc.text = x_ticks[i];
-			label_dsc.align = LV_TEXT_ALIGN_CENTER;
-			lv_draw_label(layer, &label_dsc, &a);
-		}
-	}
+      lv_area_t a;
+      // Центруємо текст над точкою (враховуючи координати чарта)
+      a.x1 = chart_area.x1 + p.x - 20;
+      a.x2 = chart_area.x1 + p.x + 20;
+      a.y1 = chart_area.y1 + p.y - 20; // 20 пікселів вище точки
+      a.y2 = chart_area.y1 + p.y - 5;
+
+      label_dsc.text = buf;
+      label_dsc.align = LV_TEXT_ALIGN_CENTER;
+      lv_draw_label(layer, &label_dsc, &a);
+    }
+
+    // --- Ось Y ---
+    for (int i = 0; i < 5; i++)
+    {
+      int32_t val = -40 + (i * 90 / 4);
+      char buf[16];
+      lv_snprintf(buf, sizeof(buf), "%d", (int)val);
+
+      int32_t y = chart_area.y2 - (i * lv_area_get_height(&chart_area) / 4);
+
+      lv_area_t a;
+      a.x1 = chart_area.x1 - 45;
+      a.x2 = chart_area.x1 - 5;
+      a.y1 = y - 7;
+      a.y2 = y + 7;
+      label_dsc.text = buf;
+      label_dsc.align = LV_TEXT_ALIGN_RIGHT;
+      lv_draw_label(layer, &label_dsc, &a);
+    }
+
+    // --- Ось X ---
+    const char *x_ticks[] = {"0", "3", "6", "9", "12", "15", "18", "21", "24"};
+    for (int i = 0; i < 9; i++)
+    {
+      int32_t x = chart_area.x1 + (i * lv_area_get_width(&chart_area) / 7);
+
+      lv_area_t a;
+      a.x1 = x - 20;
+      a.x2 = x + 20;
+      a.y1 = chart_area.y2 + 5;
+      a.y2 = chart_area.y2 + 25;
+      label_dsc.text = x_ticks[i];
+      label_dsc.align = LV_TEXT_ALIGN_CENTER;
+      lv_draw_label(layer, &label_dsc, &a);
+    }
+  }
 }
 
 void create_weather_chart(lv_obj_t *parent)
@@ -124,39 +156,39 @@ void create_weather_chart(lv_obj_t *parent)
 
 	// Налаштування Scatter
 	lv_chart_set_type(chart, LV_CHART_TYPE_SCATTER);
-	lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, -40, 50);
-	lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_X, 0, 24);
-	lv_chart_set_div_line_count(chart, 0, 0);
-	lv_chart_set_point_count(chart, 9); // Чітко 9 точок
+  lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, -40, 40);
+  lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_X, 0, 24);
+  lv_chart_set_div_line_count(chart, 0, 0);
+  lv_chart_set_point_count(chart, 9); // Чітко 9 точок
 
-	// Стиль фону та відступи (ВАЖЛИВО: великі падінги, щоб текст не обрізався)
-	lv_obj_set_style_bg_color(chart, lv_color_hex(0x1e1e2f), 0);
-	lv_obj_set_style_pad_left(chart, 20, 0);
-	lv_obj_set_style_pad_bottom(chart, 20, 0);
-	lv_obj_set_style_pad_right(chart, 20, 0);			 // Трохи справа для останньої мітки X
-	lv_obj_set_style_clip_corner(chart, false, 0); // Дозволяємо малювати за межами
+  // Стиль фону та відступи (ВАЖЛИВО: великі падінги, щоб текст не обрізався)
+  lv_obj_set_style_bg_color(chart, lv_color_hex(0x1e1e2f), 0);
+  lv_obj_set_style_pad_left(chart, 20, 0);
+  lv_obj_set_style_pad_bottom(chart, 20, 0);
+  lv_obj_set_style_pad_right(chart, 30, 0);     // Трохи справа для останньої мітки X
+  lv_obj_set_style_clip_corner(chart, true, 0); // Дозволяємо малювати за межами
 
-	// Додаємо серію
-	lv_chart_series_t *ser = lv_chart_add_series(chart, lv_color_hex(0x00E0FF), LV_CHART_AXIS_PRIMARY_Y);
-	lv_chart_set_ext_x_array(chart, ser, x_values);
-	lv_chart_set_ext_y_array(chart, ser, y_values);
+  // Додаємо серію
+  lv_chart_series_t *ser = lv_chart_add_series(chart, lv_color_hex(0x00E0FF), LV_CHART_AXIS_PRIMARY_Y);
+  lv_chart_set_ext_x_array(chart, ser, x_values);
+  lv_chart_set_ext_y_array(chart, ser, y_values);
 
-	// Додаємо колбек
-	lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
+  // Додаємо колбек
+  lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
 
-	for (int i = 0; i < 9; i++)
-	{
-		lv_point_t p;
-		lv_chart_get_point_pos_by_id(chart, ser, i, &p);
+  for (int i = 0; i < 9; i++)
+  {
+    lv_point_t p;
+    lv_chart_get_point_pos_by_id(chart, ser, i, &p);
 
-		lv_obj_t *label = lv_label_create(chart);
-		lv_label_set_text_fmt(label, "%d", y_values[i]);
-		lv_obj_set_style_text_color(label, lv_color_hex(0x4DA6FF), 0);
-		lv_obj_set_style_text_font(label, &lv_font_montserrat_10, 0);
+    lv_obj_t *label = lv_label_create(chart);
+    lv_label_set_text_fmt(label, "%d", y_values[i]);
+    lv_obj_set_style_text_color(label, lv_color_hex(0x4DA6FF), 0);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_10, 0);
 
 		// Позиціонування (враховуйте, що в LVGL 8+ координати точок відносні всередині чарта)
 		lv_obj_align(label, LV_ALIGN_TOP_LEFT, p.x - 10, p.y - 20);
-	}
+  }
 
-	lv_chart_refresh(chart);
+  lv_chart_refresh(chart);
 }
