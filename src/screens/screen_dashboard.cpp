@@ -3,9 +3,11 @@
 #include "theme/colors.h"
 #include <wifi_widget.h>
 #include <digital_clock.h>
+#include <today_weather.h>
 
 static lv_obj_t *screen;
 static lv_obj_t *wifi_widget;
+static lv_obj_t *weather_widget;
 
 static void wifi_update_timer(lv_timer_t *timer)
 {
@@ -30,6 +32,14 @@ static void wifi_update_timer(lv_timer_t *timer)
 		level = 0;
 
 	wifi_icon_set_level(wifi_widget, level);
+}
+
+void dashboard_set_weather(const WeatherData &data)
+{
+	if (weather_widget)
+	{
+		today_weather_set_data(weather_widget, data);
+	}
 }
 
 static void clean(lv_obj_t * obj)
@@ -102,6 +112,10 @@ void screen_dashboard_init(void)
 	lv_obj_set_size(left, LV_PCT(50), LV_PCT(100));
 	clean(left);
 	lv_obj_set_style_bg_color(left, lv_color_hex(0x06D6A0), 0);
+	weather_widget = today_weather_create(left);
+	lv_obj_set_size(weather_widget,
+									LV_PCT(100),
+									LV_PCT(100));
 
 	/* RIGHT */
 	lv_obj_t * right = lv_obj_create(row2);
