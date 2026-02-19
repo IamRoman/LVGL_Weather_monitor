@@ -62,22 +62,22 @@ void screen_home_init(void)
 
     lv_obj_set_style_bg_color(screen, COLOR_BG_DARK, 0);
 
-		clock_create(screen);
+    clock_create(screen);
 
-		wifi_widget = wifi_icon_create(screen);
-		lv_obj_align(wifi_widget, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-		lv_timer_create(wifi_update_timer, 2000, NULL); // timer 2 seconds (WI-FI Status)
+    wifi_widget = wifi_icon_create(screen);
+    lv_obj_align(wifi_widget, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_timer_create(wifi_update_timer, 2000, NULL); // timer 2 seconds (WI-FI Status)
 
-		lv_obj_t *btn = lv_btn_create(screen);
-		lv_obj_align(btn, LV_ALIGN_RIGHT_MID, 0, 100);
-		lv_obj_add_event_cb(btn, btn_toggle_event,
-												LV_EVENT_CLICKED, NULL);
+    lv_obj_t *btn = lv_btn_create(screen);
+    lv_obj_align(btn, LV_ALIGN_RIGHT_MID, 0, 100);
+    lv_obj_add_event_cb(btn, btn_toggle_event,
+                        LV_EVENT_CLICKED, NULL);
 
-		lv_obj_t *btn_clock_label = lv_label_create(btn);
-		lv_label_set_text(btn_clock_label, "Toggle 12/24h");
-		lv_obj_center(btn_clock_label);
+    lv_obj_t *btn_clock_label = lv_label_create(btn);
+    lv_label_set_text(btn_clock_label, "Toggle 12/24h");
+    lv_obj_center(btn_clock_label);
 
-		LV_IMAGE_DECLARE(sun);
+    LV_IMAGE_DECLARE(sun);
     lv_obj_t *img1 = lv_image_create(screen);
     lv_image_set_src(img1, &sun);
     // lv_obj_set_size(img1, 40, 40);

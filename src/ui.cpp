@@ -1,8 +1,8 @@
 #include "ui.h"
-#include "screens/screen_home.h"
+#include "screen_dashboard.h"
 
 void ui_init(void)
 {
-  screen_home_init();
-  lv_scr_load(screen_home_get());
+  screen_dashboard_init();
+  lv_scr_load(screen_dashboard_get());
 }

@@ -29,7 +29,7 @@ void setup()
 		{
 			Serial.println("Weather updated");
 			Serial.println(weather.temperature);
-			WiFi.disconnect(true);
+			// WiFi.disconnect(true);
 		}
 
 		ui_init();
