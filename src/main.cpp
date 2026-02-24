@@ -27,26 +27,32 @@ static void weather_timer_cb(lv_timer_t *timer)
 
 void setup()
 {
-    Serial.begin(115200);
+	Serial.begin(115200);
 
-		lv_init();
+	lv_init();
 
-		display_init();
-		touch_init();
+	display_init();
+	touch_init();
 
-		wifi_init("netis-6A6F79", "qwerty777");
-		weather_time_init();
-		ui_init();
+	wifi_init("netis-6A6F79", "qwerty777");
+	weather_time_init();
+	ui_init();
 
-		if (weather_update(weather))
-		{
-			Serial.println("Weather updated");
-			Serial.println(weather.temperature);
-			dashboard_set_weather(weather);
-			// WiFi.disconnect(true);
-		}
-		// Таймер кожні 3хв
-		lv_timer_create(weather_timer_cb, 180000, NULL);
+	if (weather_update(weather))
+	{
+		Serial.println("Weather updated");
+		Serial.println(weather.temperature);
+		dashboard_set_weather(weather);
+		// WiFi.disconnect(true);
+	}
+	// Таймер кожні 3хв
+	lv_timer_create(weather_timer_cb, 180000, NULL);
+
+	Serial.print("Free heap: ");
+	Serial.println(ESP.getFreeHeap());
+
+	Serial.print("Min free heap: ");
+	Serial.println(ESP.getMinFreeHeap());
 }
 
 void loop()

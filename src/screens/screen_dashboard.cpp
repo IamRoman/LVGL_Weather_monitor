@@ -4,10 +4,12 @@
 #include <wifi_widget.h>
 #include <digital_clock.h>
 #include <today_weather.h>
+#include "kp_chart.h"
 
 static lv_obj_t *screen;
 static lv_obj_t *wifi_widget;
 static lv_obj_t *weather_widget;
+float kp_test[KP_FORECAST_DAYS] = {5.33, 3.67, 2.67, 1.67};
 
 static void wifi_update_timer(lv_timer_t *timer)
 {
@@ -135,6 +137,7 @@ void screen_dashboard_init(void)
 	lv_obj_set_size(bottom, LV_PCT(100), LV_PCT(50));
 	clean(bottom);
 	lv_obj_set_style_bg_color(bottom, lv_color_hex(0xEF476F), 0);
+	create_kp_chart(bottom, kp_test);
 }
 
 lv_obj_t * screen_dashboard_get(void)
