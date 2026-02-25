@@ -1,5 +1,6 @@
 #include "kp_chart.h"
 #include <stdio.h>
+#include <time.h>
 
 #define KP_FORECAST_DAYS 4
 
@@ -8,62 +9,80 @@ typedef struct {
     uint32_t count;
 } chart_user_data_t;
 
+static lv_color_t kp_to_color(float kp)
+{
+	if (kp < 4.0f)
+		return lv_palette_main(LV_PALETTE_GREEN); // слабка буря
+	else if (kp < 6.0f)
+		return lv_palette_main(LV_PALETTE_YELLOW); // середня буря
+	else
+		return lv_palette_main(LV_PALETTE_RED); // сильна буря
+}
+
 static void chart_event_cb(lv_event_t *e)
 {
     lv_obj_t *chart = (lv_obj_t *)lv_event_get_target(e);
-    lv_event_code_t code = lv_event_get_code(e);
-    if(code != LV_EVENT_DRAW_POST) return;
+		if (lv_event_get_code(e) != LV_EVENT_DRAW_POST)
+			return;
 
-    lv_layer_t *layer = lv_event_get_layer(e);
+		lv_layer_t *layer = lv_event_get_layer(e);
 
-    /* Стиль тексту */
-    lv_draw_label_dsc_t label_dsc;
-    lv_draw_label_dsc_init(&label_dsc);
-    label_dsc.color = lv_color_hex(0x4DA6FF);
-    label_dsc.font = &lv_font_montserrat_10;
-    label_dsc.align = LV_TEXT_ALIGN_CENTER;
+		lv_draw_label_dsc_t label_dsc;
+		lv_draw_label_dsc_init(&label_dsc);
+		label_dsc.color = lv_color_hex(0x4DA6FF);
+		label_dsc.font = &lv_font_montserrat_10;
+		label_dsc.align = LV_TEXT_ALIGN_CENTER;
 
-    lv_area_t chart_area;
-    lv_obj_get_content_coords(chart, &chart_area);
-    int32_t chart_w = lv_area_get_width(&chart_area);
+		lv_area_t chart_area;
+		lv_obj_get_content_coords(chart, &chart_area);
+		int32_t chart_w = lv_area_get_width(&chart_area);
 
-    chart_user_data_t *ud = (chart_user_data_t *)lv_obj_get_user_data(chart);
+		chart_user_data_t *ud = (chart_user_data_t *)lv_obj_get_user_data(chart);
 
-    /* Підписи осі X */
-    const char *x_ticks[] = {"00","03","06","09"};
-    for(uint32_t i = 0; i < ud->count; i++) {
-        int32_t x = chart_area.x1 + (i * chart_w) / (ud->count - 1);
+		/* Підписи осі X */
+		const char *x_ticks[] = {"00", "03", "06", "09"};
+		for (uint32_t i = 0; i < ud->count; i++)
+		{
+			int32_t x = chart_area.x1 + (i * chart_w) / (ud->count - 1);
 
-        lv_area_t area;
-        area.x1 = x - 15;
-        area.x2 = x + 15;
-        area.y1 = chart_area.y2 + 2;
-        area.y2 = chart_area.y2 + 18;
+			lv_area_t area;
+			area.x1 = x - 15;
+			area.x2 = x + 15;
+			area.y1 = chart_area.y2 + 2;
+			area.y2 = chart_area.y2 + 18;
 
-        label_dsc.text = x_ticks[i];
-        lv_draw_label(layer, &label_dsc, &area);
-    }
+			label_dsc.text = x_ticks[i];
+			lv_draw_label(layer, &label_dsc, &area);
+		}
 
-    /* Значення над стовпчиками */
-    lv_chart_series_t *ser = lv_chart_get_series_next(chart, NULL);
-    if(ser) {
-        for(uint32_t i = 0; i < ud->count; i++) {
-            lv_point_t pt;
-            lv_chart_get_point_pos_by_id(chart, ser, i, &pt);
+		/* Значення над кожним баром */
+		lv_chart_series_t *ser = NULL;
+		uint32_t bar_idx = 0; // серія = індекс бару
+		while ((ser = lv_chart_get_series_next(chart, ser)) != NULL)
+		{
+			lv_point_t pt;
+			lv_chart_get_point_pos_by_id(chart, ser, bar_idx, &pt);
 
-            char buf[16];
-            lv_snprintf(buf, sizeof(buf), "%d", (int)ud->kp_values[i]);
+			// char buf[16];
+			// lv_snprintf(buf, sizeof(buf), "%d", (int)ud->kp_values[bar_idx]);
+			// lv_snprintf(buf, sizeof(buf), "%.1f", ud->kp_values[bar_idx]);
+			float val = ud->kp_values[bar_idx];
+			int whole = (int)val;
+			int frac = (int)((val - whole) * 10 + 0.5); // округлення до 1 знаку
+			char buf[16];
+			lv_snprintf(buf, sizeof(buf), "%d.%d", whole, frac);
 
-            lv_area_t area_v;
-            area_v.x1 = chart_area.x1 + pt.x - 15;
-            area_v.x2 = chart_area.x1 + pt.x + 15;
-            area_v.y1 = chart_area.y1 + pt.y - 18;
-            area_v.y2 = chart_area.y1 + pt.y - 3;
+			lv_area_t area_v;
+			area_v.x1 = chart_area.x1 + pt.x - 15;
+			area_v.x2 = chart_area.x1 + pt.x + 15;
+			area_v.y1 = chart_area.y1 + pt.y - 18;
+			area_v.y2 = chart_area.y1 + pt.y - 3;
 
-            label_dsc.text = buf;
-            lv_draw_label(layer, &label_dsc, &area_v);
-        }
-    }
+			label_dsc.text = buf;
+			lv_draw_label(layer, &label_dsc, &area_v);
+
+			bar_idx++; // наступний бар
+		}
 }
 
 void create_kp_chart(lv_obj_t *parent, float *kp_values)
@@ -76,23 +95,24 @@ void create_kp_chart(lv_obj_t *parent, float *kp_values)
     lv_obj_set_size(chart, 180, 120);
     lv_chart_set_type(chart, LV_CHART_TYPE_BAR);
     lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 10);
-    lv_chart_set_point_count(chart, 4);
+		lv_chart_set_point_count(chart, 4);
 
-    lv_chart_series_t *ser = lv_chart_add_series(chart,
-                                lv_palette_main(LV_PALETTE_RED),
-                                LV_CHART_AXIS_PRIMARY_Y);
+		// створюємо окрему серію для кожного бару
+		for (int i = 0; i < 4; i++)
+		{
+			lv_color_t bar_color = kp_to_color(kp_values[i]);
+			lv_chart_series_t *ser = lv_chart_add_series(chart, bar_color, LV_CHART_AXIS_PRIMARY_Y);
+			lv_chart_set_value_by_id(chart, ser, i, kp_values[i]);
+		}
 
-    for(int i = 0; i < 4; i++)
-        lv_chart_set_next_value(chart, ser, kp_values[i]);
+		/* Передаємо дані через user_data */
+		chart_user_data_t *ud = new chart_user_data_t;
+		ud->kp_values = kp_values;
+		ud->count = 4;
+		lv_obj_set_user_data(chart, ud);
 
-    /* Передаємо дані через user_data */
-    chart_user_data_t *ud = new chart_user_data_t;
-    ud->kp_values = kp_values;
-    ud->count = 4;
-    lv_obj_set_user_data(chart, ud);
-
-    lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
-    lv_chart_refresh(chart);
+		lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
+		lv_chart_refresh(chart);
 }
 
 // void create_kp_chart(lv_obj_t * parent, float * kp_values)
