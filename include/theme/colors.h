@@ -3,6 +3,7 @@
 
 // ===== Base colors =====
 #define WHITE lv_color_hex(0xFFFFFF)
+#define GRAY lv_color_hex(0x252937)
 
 #define COLOR_PRIMARY        lv_color_hex(0x3A86FF)
 #define COLOR_SECONDARY      lv_color_hex(0x8338EC)

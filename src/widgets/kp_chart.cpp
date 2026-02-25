@@ -1,6 +1,7 @@
 #include "kp_chart.h"
 #include <stdio.h>
 #include <time.h>
+#include <theme/colors.h>
 
 void create_kp_chart(lv_obj_t *parent, float *kp_values)
 {
@@ -25,13 +26,12 @@ void create_kp_chart(lv_obj_t *parent, float *kp_values)
 	const int chart_height = 80;
 	const int max_value = 10;
 
-	// Контейнер чарта
 	lv_obj_t *chart_cont = lv_obj_create(parent);
-	lv_obj_set_size(chart_cont, 4 * (bar_width + bar_spacing) + 40, chart_height + 90);
+	lv_obj_set_size(chart_cont, 4 * (bar_width + bar_spacing) + 20, chart_height + 90);
 	lv_obj_center(chart_cont);
 	lv_obj_clear_flag(chart_cont, LV_OBJ_FLAG_SCROLLABLE);
-	lv_obj_set_style_bg_color(chart_cont, lv_color_white(), LV_PART_MAIN);
-	lv_obj_set_style_border_width(chart_cont, 1, LV_PART_MAIN);
+	lv_obj_set_style_bg_color(chart_cont, COLOR_BG_DARK, LV_PART_MAIN);
+	lv_obj_set_style_border_opa(chart_cont, LV_OPA_TRANSP, LV_PART_MAIN);
 
 	// Тайтл: поточне значення Kp
 	char title_buf[32];
@@ -61,7 +61,7 @@ void create_kp_chart(lv_obj_t *parent, float *kp_values)
 	lv_line_set_points(x_line, line_points, 2);
 	lv_obj_align(x_line, LV_ALIGN_TOP_LEFT, 0, 30);
 	lv_obj_set_style_line_width(x_line, 2, LV_PART_MAIN);
-	lv_obj_set_style_line_color(x_line, lv_color_black(), LV_PART_MAIN);
+	lv_obj_set_style_line_color(x_line, WHITE, LV_PART_MAIN);
 
 	// Малюємо бари
 	for (int i = 0; i < 4; i++)
@@ -91,10 +91,12 @@ void create_kp_chart(lv_obj_t *parent, float *kp_values)
 		lv_obj_t *label = lv_label_create(chart_cont); // створюємо label
 		lv_label_set_text(label, buf);
 		lv_obj_align_to(label, bar, LV_ALIGN_OUT_TOP_MID, 0, -5);
+		lv_obj_set_style_text_color(label, COLOR_TEXT_PRIMARY, LV_PART_MAIN);
 
 		// Підпис осі X
 		lv_obj_t *x_label = lv_label_create(chart_cont);
 		lv_label_set_text(x_label, x_labels[i]);
 		lv_obj_align_to(x_label, bar, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+		lv_obj_set_style_text_color(x_label, COLOR_TEXT_PRIMARY, LV_PART_MAIN);
 	}
 }
