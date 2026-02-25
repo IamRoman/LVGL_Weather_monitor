@@ -21,98 +21,117 @@ static lv_color_t kp_to_color(float kp)
 
 static void chart_event_cb(lv_event_t *e)
 {
-    lv_obj_t *chart = (lv_obj_t *)lv_event_get_target(e);
-		if (lv_event_get_code(e) != LV_EVENT_DRAW_POST)
-			return;
+	lv_obj_t *chart = (lv_obj_t *)lv_event_get_target(e);
+	if (lv_event_get_code(e) != LV_EVENT_DRAW_POST)
+		return;
 
-		lv_layer_t *layer = lv_event_get_layer(e);
+	lv_layer_t *layer = lv_event_get_layer(e);
 
-		lv_draw_label_dsc_t label_dsc;
-		lv_draw_label_dsc_init(&label_dsc);
-		label_dsc.color = lv_color_hex(0x4DA6FF);
-		label_dsc.font = &lv_font_montserrat_10;
-		label_dsc.align = LV_TEXT_ALIGN_CENTER;
+	lv_draw_label_dsc_t label_dsc;
+	lv_draw_label_dsc_init(&label_dsc);
+	label_dsc.color = lv_color_hex(0x4DA6FF);
+	label_dsc.font = &lv_font_montserrat_10;
+	label_dsc.align = LV_TEXT_ALIGN_CENTER;
 
-		lv_area_t chart_area;
-		lv_obj_get_content_coords(chart, &chart_area);
-		int32_t chart_w = lv_area_get_width(&chart_area);
+	lv_area_t chart_area;
+	lv_obj_get_content_coords(chart, &chart_area);
+	int32_t chart_w = lv_area_get_width(&chart_area);
 
-		chart_user_data_t *ud = (chart_user_data_t *)lv_obj_get_user_data(chart);
+	chart_user_data_t *ud = (chart_user_data_t *)lv_obj_get_user_data(chart);
 
-		/* Підписи осі X */
-		const char *x_ticks[] = {"00", "03", "06", "09"};
-		for (uint32_t i = 0; i < ud->count; i++)
-		{
-			int32_t x = chart_area.x1 + (i * chart_w) / (ud->count - 1);
+	/* Генеруємо підписи осі X — сьогодні + 3 дні */
+	char x_ticks[4][6]; // 4 дні, формат dd/mm
+	time_t t = time(NULL);
+	struct tm tm_info = *localtime(&t);
+	for (int i = 0; i < 4; i++)
+	{
+		struct tm tmp = tm_info;
+		tmp.tm_mday += i; // додаємо дні
+		mktime(&tmp);			// коригує перехід місяця/року
+		strftime(x_ticks[i], sizeof(x_ticks[i]), "%d/%m", &tmp);
+	}
 
-			lv_area_t area;
-			area.x1 = x - 15;
-			area.x2 = x + 15;
-			area.y1 = chart_area.y2 + 2;
-			area.y2 = chart_area.y2 + 18;
+	/* Малюємо підписи осі X */
+	for (uint32_t i = 0; i < ud->count; i++)
+	{
+		int32_t x = chart_area.x1 + (i * chart_w) / (ud->count - 1);
 
-			label_dsc.text = x_ticks[i];
-			lv_draw_label(layer, &label_dsc, &area);
-		}
+		lv_area_t area;
+		area.x1 = x - 20; // трохи ширше для відступу
+		area.x2 = x + 20;
+		area.y1 = chart_area.y2 + 8;	// верт. відступ від низу графіка
+		area.y2 = chart_area.y2 + 12; // підпис нижче бару
 
-		/* Значення над кожним баром */
-		lv_chart_series_t *ser = NULL;
-		uint32_t bar_idx = 0; // серія = індекс бару
-		while ((ser = lv_chart_get_series_next(chart, ser)) != NULL)
-		{
-			lv_point_t pt;
-			lv_chart_get_point_pos_by_id(chart, ser, bar_idx, &pt);
+		label_dsc.text = x_ticks[i];
+		lv_draw_label(layer, &label_dsc, &area);
+	}
 
-			// char buf[16];
-			// lv_snprintf(buf, sizeof(buf), "%d", (int)ud->kp_values[bar_idx]);
-			// lv_snprintf(buf, sizeof(buf), "%.1f", ud->kp_values[bar_idx]);
-			float val = ud->kp_values[bar_idx];
-			int whole = (int)val;
-			int frac = (int)((val - whole) * 10 + 0.5); // округлення до 1 знаку
-			char buf[16];
-			lv_snprintf(buf, sizeof(buf), "%d.%d", whole, frac);
+	/* Значення над кожним баром */
+	lv_chart_series_t *ser = NULL;
+	uint32_t bar_idx = 0; // серія = індекс бару
+	while ((ser = lv_chart_get_series_next(chart, ser)) != NULL)
+	{
+		lv_point_t pt;
+		lv_chart_get_point_pos_by_id(chart, ser, bar_idx, &pt);
 
-			lv_area_t area_v;
-			area_v.x1 = chart_area.x1 + pt.x - 15;
-			area_v.x2 = chart_area.x1 + pt.x + 15;
-			area_v.y1 = chart_area.y1 + pt.y - 18;
-			area_v.y2 = chart_area.y1 + pt.y - 3;
+		// char buf[16];
+		// lv_snprintf(buf, sizeof(buf), "%d", (int)ud->kp_values[bar_idx]);
+		// lv_snprintf(buf, sizeof(buf), "%.1f", ud->kp_values[bar_idx]);
+		float val = ud->kp_values[bar_idx];
+		int whole = (int)val;
+		int frac = (int)((val - whole) * 10 + 0.5); // округлення до 1 знаку
+		char buf[16];
+		lv_snprintf(buf, sizeof(buf), "%d.%d", whole, frac);
 
-			label_dsc.text = buf;
-			lv_draw_label(layer, &label_dsc, &area_v);
+		lv_area_t area_v;
+		area_v.x1 = chart_area.x1 + pt.x - 15;
+		area_v.x2 = chart_area.x1 + pt.x + 15;
+		area_v.y1 = chart_area.y1 + pt.y - 18;
+		area_v.y2 = chart_area.y1 + pt.y - 3;
 
-			bar_idx++; // наступний бар
-		}
+		label_dsc.text = buf;
+		lv_draw_label(layer, &label_dsc, &area_v);
+
+		bar_idx++; // наступний бар
+	}
 }
 
 void create_kp_chart(lv_obj_t *parent, float *kp_values)
 {
-    lv_obj_t *main_cont = lv_obj_create(parent);
-    lv_obj_set_size(main_cont, 200, 150);
-    lv_obj_center(main_cont);
+	// lv_obj_t *main_cont = lv_obj_create(parent);
+	// lv_obj_set_size(main_cont, LV_PCT(100), LV_PCT(100));
+	// lv_obj_center(main_cont);
 
-    lv_obj_t *chart = lv_chart_create(main_cont);
-    lv_obj_set_size(chart, 180, 120);
-    lv_chart_set_type(chart, LV_CHART_TYPE_BAR);
-    lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 10);
-		lv_chart_set_point_count(chart, 4);
+	lv_obj_t *chart = lv_chart_create(parent);
+	lv_obj_set_size(chart, LV_PCT(80), LV_PCT(80));
+	lv_chart_set_type(chart, LV_CHART_TYPE_BAR);
+	lv_chart_set_axis_range(chart, LV_CHART_AXIS_PRIMARY_Y, 0, 10);
+	lv_chart_set_point_count(chart, 4);
+	lv_obj_center(chart);
 
-		// створюємо окрему серію для кожного бару
-		for (int i = 0; i < 4; i++)
-		{
-			lv_color_t bar_color = kp_to_color(kp_values[i]);
-			lv_chart_series_t *ser = lv_chart_add_series(chart, bar_color, LV_CHART_AXIS_PRIMARY_Y);
-			lv_chart_set_value_by_id(chart, ser, i, kp_values[i]);
-		}
+	// Стилізація
+	lv_obj_set_style_bg_color(chart, lv_color_hex(0x1e1e2f), 0);
+	lv_obj_set_style_border_width(chart, 0, 0);
 
-		/* Передаємо дані через user_data */
-		chart_user_data_t *ud = new chart_user_data_t;
-		ud->kp_values = kp_values;
-		ud->count = 4;
-		lv_obj_set_user_data(chart, ud);
+	// Сітка: 0 горизонтальних ліній, 8 вертикальних (для кожної мітки часу)
+	lv_chart_set_div_line_count(chart, 0, 0);
 
-		lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
-		lv_chart_refresh(chart);
+	// створюємо окрему серію для кожного бару
+	for (int i = 0; i < 4; i++)
+	{
+		lv_color_t bar_color = kp_to_color(kp_values[i]);
+		lv_chart_series_t *ser = lv_chart_add_series(chart, bar_color, LV_CHART_AXIS_PRIMARY_Y);
+		lv_chart_set_value_by_id(chart, ser, i, kp_values[i]);
+	}
+
+	/* Передаємо дані через user_data */
+	chart_user_data_t *ud = new chart_user_data_t;
+	ud->kp_values = kp_values;
+	ud->count = 4;
+	lv_obj_set_user_data(chart, ud);
+
+	lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
+	lv_chart_refresh(chart);
 }
 
 // void create_kp_chart(lv_obj_t * parent, float * kp_values)
