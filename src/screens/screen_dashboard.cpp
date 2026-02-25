@@ -136,7 +136,7 @@ void screen_dashboard_init(void)
 	lv_obj_t * bottom = lv_obj_create(right);
 	lv_obj_set_size(bottom, LV_PCT(100), LV_PCT(50));
 	clean(bottom);
-	lv_obj_set_style_bg_color(bottom, lv_color_hex(0xEF476F), 0);
+	lv_obj_set_style_bg_color(bottom, COLOR_BG_DARK, 0);
 	create_kp_chart(bottom, kp_test);
 }
 
