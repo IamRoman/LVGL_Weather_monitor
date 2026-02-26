@@ -99,11 +99,11 @@ void kp_chart_set_data(kp_chart_t *chart, const WeatherData &data)
 														 &lv_font_montserrat_18, 0);
 
 	if (current_kp <= 3)
-		lv_obj_set_style_text_color(chart->title_label, lv_palette_main(LV_PALETTE_GREEN), LV_PART_MAIN);
+		lv_obj_set_style_text_color(chart->title_label, GREEN, LV_PART_MAIN);
 	else if (current_kp <= 6)
-		lv_obj_set_style_text_color(chart->title_label, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_MAIN);
+		lv_obj_set_style_text_color(chart->title_label, DARK_YELLOW, LV_PART_MAIN);
 	else
-		lv_obj_set_style_text_color(chart->title_label, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
+		lv_obj_set_style_text_color(chart->title_label, RED, LV_PART_MAIN);
 
 	/* --- Generate DD/MM dates --- */
 	char x_labels[KP_FORECAST_DAYS][6];
@@ -127,11 +127,11 @@ void kp_chart_set_data(kp_chart_t *chart, const WeatherData &data)
 									 base_y - bar_height);
 
 		if (data.kp_forecast[i] <= 3)
-			lv_obj_set_style_bg_color(chart->bars[i], lv_palette_main(LV_PALETTE_GREEN), LV_PART_MAIN);
+			lv_obj_set_style_bg_color(chart->bars[i], GREEN, LV_PART_MAIN);
 		else if (data.kp_forecast[i] <= 6)
-			lv_obj_set_style_bg_color(chart->bars[i], lv_palette_main(LV_PALETTE_YELLOW), LV_PART_MAIN);
+			lv_obj_set_style_bg_color(chart->bars[i], DARK_YELLOW, LV_PART_MAIN);
 		else
-			lv_obj_set_style_bg_color(chart->bars[i], lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
+			lv_obj_set_style_bg_color(chart->bars[i], RED, LV_PART_MAIN);
 
 		/* --- Signature above the bar --- */
 		char buf[16];

@@ -4,6 +4,11 @@
 // ===== Base colors =====
 #define WHITE lv_color_hex(0xFFFFFF)
 #define GRAY lv_color_hex(0x252937)
+#define DARK_YELLOW lv_color_hex(0xCA8632)
+#define RED lv_color_hex(0x901E16)
+#define BLUE lv_color_hex(0x3B7CCA)
+#define LIGHT_BLUE lv_color_hex(0x5BABC2)
+#define GREEN lv_color_hex(0x94806E)
 
 #define COLOR_PRIMARY        lv_color_hex(0x3A86FF)
 #define COLOR_SECONDARY      lv_color_hex(0x8338EC)
