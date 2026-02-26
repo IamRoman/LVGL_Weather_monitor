@@ -1,12 +1,12 @@
 #include "screen_settings.h"
-#include "screen_home.h"
+#include "screen_dashboard.h"
 #include "theme/colors.h"
 
 static lv_obj_t * screen;
 
 static void back_event(lv_event_t * e)
 {
-    lv_scr_load_anim(screen_home_get(),
+    lv_scr_load_anim(screen_dashboard_get(),
                      LV_SCR_LOAD_ANIM_MOVE_RIGHT,
                      150, 0, false);
 }

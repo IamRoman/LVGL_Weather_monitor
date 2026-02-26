@@ -13,10 +13,6 @@ struct WeatherData
 	// Погодинний прогноз
 	float hourly_temp[FORECAST_SIZE]; // Температура кожні 3 години
 
-	// поточний
-	float kp_index;
-	int storm_level;
-
 	// 7 днів
 	float kp_forecast[KP_FORECAST_DAYS];
 	int storm_forecast[KP_FORECAST_DAYS];

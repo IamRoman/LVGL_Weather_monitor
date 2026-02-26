@@ -1,4 +1,4 @@
-#include "widgets/digital_clock.h"
+#include "digital_clock.h"
 #include <time.h>
 #include <theme/colors.h>
 

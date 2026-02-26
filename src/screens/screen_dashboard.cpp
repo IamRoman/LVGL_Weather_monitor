@@ -5,10 +5,12 @@
 #include <digital_clock.h>
 #include <today_weather.h>
 #include "kp_chart.h"
+#include <settings_button.h>
 
 static lv_obj_t *screen;
 static lv_obj_t *wifi_widget;
 static lv_obj_t *weather_widget;
+static lv_obj_t *settings_button;
 static kp_chart_t *kp_chart_widget;
 
 float kp_test[KP_FORECAST_DAYS] = {5.33, 3.67, 2.67, 1.67};
@@ -61,7 +63,7 @@ static void clean(lv_obj_t * obj)
 static void add_wi_fi_widget(lv_obj_t * obj)
 {
   wifi_widget = wifi_icon_create(obj);
-	lv_obj_align(wifi_widget, LV_ALIGN_LEFT_MID, 0, 0);
+	lv_obj_align(wifi_widget, LV_ALIGN_CENTER, 0, 0);
 	lv_timer_create(wifi_update_timer, 2000, NULL); // timer 2 seconds (WI-FI Status)
 }
 
@@ -92,16 +94,20 @@ void screen_dashboard_init(void)
 			if(i==0) {
 				lv_obj_set_size(w, LV_PCT(15), LV_PCT(100));
 				lv_obj_set_style_bg_color(w, lv_color_hex(0x3A86FF), 0);
+				lv_obj_set_style_bg_color(w, COLOR_BG_DARK, 0);
 				add_wi_fi_widget(w);
 			}
 			if(i==1) {
 				lv_obj_set_size(w, LV_PCT(70), LV_PCT(100));
 				lv_obj_set_style_bg_color(w, lv_color_hex(0x8338EC), 0);
+				lv_obj_set_style_bg_color(w, COLOR_BG_DARK, 0);
 				clock_create(w);
 			}
 			if(i==2) {
 				lv_obj_set_size(w, LV_PCT(15), LV_PCT(100));
 				lv_obj_set_style_bg_color(w, lv_color_hex(0xFF006E), 0);
+				lv_obj_set_style_bg_color(w, COLOR_BG_DARK, 0);
+				settings_button = create_settings_icon(w);
 			}
 	}
 
