@@ -15,7 +15,7 @@ static const char* CITY = "Vinnytsia";
 static const char* COUNTRY = "UA";
 
 /* =========================
-	 NTP INIT (один раз)
+	 NTP INIT (once)
 	 ========================= */
 void weather_time_init()
 {
@@ -69,25 +69,25 @@ void get_NOAA_weather(WeatherData &data)
 
 			if (!err)
 			{
-				// обнуляємо
+				// reset
 				for (int d = 0; d < KP_FORECAST_DAYS; d++)
 				{
 					data.kp_forecast[d] = 0;
 					data.storm_forecast[d] = 0;
 				}
 
-				// поточна дата (UTC)
+				// current date (UTC)
 				time_t now = time(nullptr);
 				struct tm todayUTC;
 				gmtime_r(&now, &todayUTC);
 				todayUTC.tm_hour = 0;
 				todayUTC.tm_min = 0;
 				todayUTC.tm_sec = 0;
-				time_t today_start = mktime(&todayUTC); // початок сьогоднішнього дня UTC
+				time_t today_start = mktime(&todayUTC); // start of today UTC
 
-				// ітеруємо по всіх записах JSON
+				// iterate over all JSON records
 				for (int i = 1; i < doc.size(); i++)
-				{ // починаємо з 1, бо 0-й рядок — заголовок
+				{ // we start with 1, because the 0th line is the header
 					String type = doc[i][2].as<const char *>();
 					if (type != "observed" && type != "estimated" && type != "predicted")
 						continue;
@@ -107,16 +107,16 @@ void get_NOAA_weather(WeatherData &data)
 
 					time_t forecast_time = mktime(&forecast_tm);
 
-					int dayDiff = (forecast_time - today_start) / 86400; // різниця в днях від сьогодні
+					int dayDiff = (forecast_time - today_start) / 86400; // difference in days from today
 
 					if (dayDiff < 0 || dayDiff >= KP_FORECAST_DAYS)
-						continue; // пропускаємо минулі або далекі дні
+						continue; // we miss past or distant days
 
 					if (kp > data.kp_forecast[dayDiff])
 						data.kp_forecast[dayDiff] = kp;
 				}
 
-				// конвертуємо у G-level
+				// convert to G-level
 				for (int d = 0; d < KP_FORECAST_DAYS; d++)
 				{
 					float kp = data.kp_forecast[d];
@@ -182,7 +182,7 @@ bool weather_update(WeatherData &data)
 							 "Host: " + OWM_HOST + "\r\n" +
 							 "Connection: close\r\n\r\n");
 
-	// Статус
+	// Status
 	String status = client.readStringUntil('\n');
 	Serial.println(status);
 
@@ -193,7 +193,7 @@ bool weather_update(WeatherData &data)
 		return false;
 	}
 
-	// Пропустити заголовки
+	// Skip headers
 	while (client.connected())
 	{
 		String line = client.readStringUntil('\n');
@@ -215,7 +215,7 @@ bool weather_update(WeatherData &data)
 		return false;
 	}
 
-	// Поточна температура (перша в списку)
+	// Current temperature (first in the list)
 	data.temperature = doc["list"][0]["main"]["temp"] | 0.0;
 	data.humidity = doc["list"][0]["main"]["humidity"] | 0;
 	data.pressure = doc["list"][0]["main"]["pressure"] | 0;

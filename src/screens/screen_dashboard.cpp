@@ -9,6 +9,8 @@
 static lv_obj_t *screen;
 static lv_obj_t *wifi_widget;
 static lv_obj_t *weather_widget;
+static kp_chart_t *kp_chart_widget;
+
 float kp_test[KP_FORECAST_DAYS] = {5.33, 3.67, 2.67, 1.67};
 
 static void wifi_update_timer(lv_timer_t *timer)
@@ -38,9 +40,10 @@ static void wifi_update_timer(lv_timer_t *timer)
 
 void dashboard_set_weather(const WeatherData &data)
 {
-	if (weather_widget)
+	if (weather_widget && kp_chart_widget)
 	{
 		today_weather_set_data(weather_widget, data);
+		kp_chart_set_data(kp_chart_widget, data);
 	}
 }
 
@@ -137,7 +140,7 @@ void screen_dashboard_init(void)
 	lv_obj_set_size(bottom, LV_PCT(100), LV_PCT(50));
 	clean(bottom);
 	lv_obj_set_style_bg_color(bottom, COLOR_BG_DARK, 0);
-	create_kp_chart(bottom, kp_test);
+	kp_chart_widget = kp_chart_create(bottom);
 }
 
 lv_obj_t * screen_dashboard_get(void)
