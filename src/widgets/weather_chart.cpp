@@ -1,14 +1,20 @@
 #include "weather_chart.h"
-
 #include "lvgl.h"
+#include <theme/colors.h>
+#include <stdio.h>
+#include <cmath>
 
-// Дані (static обов'язково для зовнішніх масивів)
-static int32_t x_values[] = {0, 3, 6, 9, 12, 15, 18, 21};
-static int32_t y_values[] = {-20, -10, 0, 10, 15, 22, 18, 34};
-const uint16_t num_points = 8;
+int32_t y_vals_int[8];
 
 static void chart_event_cb(lv_event_t *e)
 {
+  chart_event_data_t *data = (chart_event_data_t *)lv_event_get_user_data(e);
+  if (!data)
+    return;
+
+  uint16_t num_points = data->num_points;
+  int32_t *y_values = data->y_values;
+
   lv_obj_t *obj = (lv_obj_t *)lv_event_get_target(e);
   lv_event_code_t code = lv_event_get_code(e);
 
@@ -16,25 +22,25 @@ static void chart_event_cb(lv_event_t *e)
   {
     lv_layer_t *layer = lv_event_get_layer(e);
 
-    // Налаштування стилю тексту
+    // Text style settings
     lv_draw_label_dsc_t label_dsc;
     lv_draw_label_dsc_init(&label_dsc);
-    label_dsc.color = lv_color_hex(0x4DA6FF);
-    label_dsc.font = &lv_font_montserrat_10;
+    label_dsc.color = WHITE;
+    label_dsc.font = &lv_font_montserrat_12;
 
     lv_area_t chart_area;
     lv_obj_get_content_coords(obj, &chart_area);
     int32_t chart_w = lv_area_get_width(&chart_area);
     int32_t chart_h = lv_area_get_height(&chart_area);
 
-    // --- РОЗРАХУНОК ПОЗИЦІЇ "0" (Діапазон -40...50) ---
-    // 0 знаходиться на позначці 40 одиниць від -40 (загальна шкала 90)
+    // --- CALCULATION OF POSITION "0" (Range -40...50) ---
+    // 0 is at 40 units from -40 (total scale 90)
     int32_t y_zero_pos = chart_area.y2 - (40 * chart_h / 90);
 
-    // --- 1. МАЛЮЄМО ЛІНІЮ НУЛЯ (LVGL 9.4 STYLE) ---
+    // --- DRAWING THE ZERO LINE ---
     lv_draw_line_dsc_t line_dsc;
     lv_draw_line_dsc_init(&line_dsc);
-    line_dsc.color = lv_color_hex(0x33334d);
+    line_dsc.color = MIDDLE_GRAY;
     line_dsc.width = 1;
     line_dsc.p1.x = (lv_value_precise_t)chart_area.x1;
     line_dsc.p1.y = (lv_value_precise_t)y_zero_pos;
@@ -42,7 +48,7 @@ static void chart_event_cb(lv_event_t *e)
     line_dsc.p2.y = (lv_value_precise_t)y_zero_pos;
     lv_draw_line(layer, &line_dsc);
 
-    // --- 2. ПІДПИС "0" НА ОСІ Y ---
+    // --- "0" SUBSTITUTE ON Y AXIS ---
     lv_area_t area_y;
     area_y.x1 = chart_area.x1 - 45;
     area_y.x2 = chart_area.x1 - 5;
@@ -52,7 +58,7 @@ static void chart_event_cb(lv_event_t *e)
     label_dsc.align = LV_TEXT_ALIGN_RIGHT;
     lv_draw_label(layer, &label_dsc, &area_y);
 
-    // --- 3. ВІСЬ X (ГОДИНИ: 00, 03...21) ---
+    // --- X AXIS (HOURS: 00, 03...21) ---
     const char *x_ticks[] = {"00", "03", "06", "09", "12", "15", "18", "21"};
     for (int i = 0; i < 8; i++)
     {
@@ -67,7 +73,7 @@ static void chart_event_cb(lv_event_t *e)
       lv_draw_label(layer, &label_dsc, &area_x);
     }
 
-    // --- 4. ЗНАЧЕННЯ ТЕМПЕРАТУРИ НАД ТОЧКАМИ ---
+    // --- TEMPERATURE VALUES ABOVE THE POINTS ---
     lv_chart_series_t *ser = lv_chart_get_series_next(obj, NULL);
     if (ser)
     {
@@ -76,11 +82,15 @@ static void chart_event_cb(lv_event_t *e)
         lv_point_t pt;
         lv_chart_get_point_pos_by_id(obj, ser, i, &pt);
 
+        // --- Formatting float ---
         char buf[16];
-        lv_snprintf(buf, sizeof(buf), "%d", (int)y_values[i]);
+        float val = y_values[i] / 10.0f;
+        int w = (int)val;
+        int f = (int)((fabs(val - w) * 10) + 0.5f); // we take fabs for the fractional part
+        sprintf(buf, "%d.%d", w, f);
 
         lv_area_t area_v;
-        // Позиція над точкою
+        // Position over point
         area_v.x1 = chart_area.x1 + pt.x - 15;
         area_v.x2 = chart_area.x1 + pt.x + 15;
         area_v.y1 = chart_area.y1 + pt.y - 18;
@@ -94,42 +104,73 @@ static void chart_event_cb(lv_event_t *e)
   }
 }
 
-void create_weather_chart(lv_obj_t *parent)
+weather_chart_t *create_weather_chart(lv_obj_t *parent)
 {
-  lv_obj_t *chart = lv_chart_create(parent);
-  lv_obj_set_size(chart, 240, 150);
-  lv_obj_center(chart);
+  weather_chart_t *wc = (weather_chart_t *)lv_malloc(sizeof(weather_chart_t));
 
-  // Основні налаштування графіка
-  lv_chart_set_type(chart, LV_CHART_TYPE_SCATTER);
-  lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_Y, -40, 50);
-  lv_chart_set_range(chart, LV_CHART_AXIS_PRIMARY_X, 0, 21);
-  lv_chart_set_point_count(chart, num_points);
+  wc->chart = lv_chart_create(parent);
+  lv_obj_set_size(wc->chart, 220, 150);
+  // lv_obj_center(wc->chart);
 
-  // Сітка: 0 горизонтальних ліній, 8 вертикальних (для кожної мітки часу)
-  lv_chart_set_div_line_count(chart, 0, 8);
+  lv_chart_set_type(wc->chart, LV_CHART_TYPE_SCATTER);
+  lv_chart_set_range(wc->chart, LV_CHART_AXIS_PRIMARY_Y, -40, 50);
+  lv_chart_set_range(wc->chart, LV_CHART_AXIS_PRIMARY_X, 0, 21);
 
-  // Стилізація
-  lv_obj_set_style_bg_color(chart, lv_color_hex(0x1e1e2f), 0);
-  lv_obj_set_style_border_width(chart, 0, 0);
+  // lv_obj_set_style_bg_color(wc->chart, COLOR_BG_DARK, 0);
+  lv_obj_set_style_bg_opa(wc->chart, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_opa(wc->chart, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(wc->chart, 0, 0);
 
-  // Відступи (Padding), щоб влізли підписи зовні графіка
-  lv_obj_set_style_pad_left(chart, 50, 0);
-  lv_obj_set_style_pad_bottom(chart, 35, 0);
-  lv_obj_set_style_clip_corner(chart, false, 0); // Дозволяє малювати підписи в зоні Padding
+  lv_obj_set_style_pad_left(wc->chart, 15, 0);
+  lv_obj_set_style_pad_right(wc->chart, 23, 0);
+  lv_obj_set_style_pad_bottom(wc->chart, 35, 0);
+  lv_obj_set_style_clip_corner(wc->chart, false, 0);
 
-  // Стиль маркерів та ліній
-  lv_obj_set_style_size(chart, 5, 5, LV_PART_INDICATOR);
-  lv_obj_set_style_line_width(chart, 2, LV_PART_ITEMS);
-  lv_chart_set_div_line_count(chart, 0, 0);
+  lv_obj_set_style_size(wc->chart, 5, 5, LV_PART_INDICATOR);
+  lv_obj_set_style_line_width(wc->chart, 1, LV_PART_ITEMS);
+  lv_chart_set_div_line_count(wc->chart, 0, 0);
 
-  // Створення серії та прив'язка даних
-  lv_chart_series_t *ser = lv_chart_add_series(chart, lv_color_hex(0x00E0FF), LV_CHART_AXIS_PRIMARY_Y);
-  lv_chart_set_ext_x_array(chart, ser, (int32_t *)x_values);
-  lv_chart_set_ext_y_array(chart, ser, (int32_t *)y_values);
+  wc->series = lv_chart_add_series(
+      wc->chart,
+      lv_color_hex(0x00E0FF),
+      LV_CHART_AXIS_PRIMARY_Y);
 
-  // Додавання колбеку для малювання підписів та лінії нуля
-  lv_obj_add_event_cb(chart, chart_event_cb, LV_EVENT_ALL, NULL);
+  wc->event_data = (chart_event_data_t *)lv_malloc(sizeof(chart_event_data_t));
+  wc->event_data->num_points = 0;
+  wc->event_data->y_values = NULL;
 
-  lv_chart_refresh(chart);
+  lv_obj_add_event_cb(wc->chart, chart_event_cb, LV_EVENT_ALL, wc->event_data);
+
+  return wc;
+}
+
+void set_weather_chart_data(weather_chart_t *wc,
+                            int32_t *x_vals,
+                            const float *y_vals,
+                            uint16_t count)
+{
+  if (!wc || !wc->chart || !wc->series)
+    return;
+
+  // We set the number of points
+  lv_chart_set_point_count(wc->chart, count);
+
+  for (int i = 0; i < 8; i++)
+  {
+    y_vals_int[i] = (int32_t)(y_vals[i] * 10 + 0.5f); // rounding for lv_chart_set_ext_y_array
+  }
+
+  // Binding data
+  lv_chart_set_ext_x_array(wc->chart, wc->series, x_vals);
+  lv_chart_set_ext_y_array(wc->chart, wc->series, y_vals_int);
+
+  // --- Update user_data inside the wrapper ---
+  if (wc->event_data)
+  {
+    wc->event_data->num_points = count;
+    wc->event_data->y_values = y_vals_int;
+  }
+
+  // Updating the schedule
+  lv_chart_refresh(wc->chart);
 }

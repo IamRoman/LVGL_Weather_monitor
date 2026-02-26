@@ -6,13 +6,16 @@
 #include <today_weather.h>
 #include "kp_chart.h"
 #include <settings_button.h>
+#include "weather_chart.h"
 
 static lv_obj_t *screen;
 static lv_obj_t *wifi_widget;
 static lv_obj_t *weather_widget;
 static lv_obj_t *settings_button;
 static kp_chart_t *kp_chart_widget;
+static weather_chart_t *weather_chart;
 
+static int32_t x_values[] = {0, 3, 6, 9, 12, 15, 18, 21};
 float kp_test[KP_FORECAST_DAYS] = {5.33, 3.67, 2.67, 1.67};
 
 static void wifi_update_timer(lv_timer_t *timer)
@@ -46,6 +49,7 @@ void dashboard_set_weather(const WeatherData &data)
 	{
 		today_weather_set_data(weather_widget, data);
 		kp_chart_set_data(kp_chart_widget, data);
+		set_weather_chart_data(weather_chart, x_values, data.hourly_temp, 8);
 	}
 }
 
@@ -122,11 +126,17 @@ void screen_dashboard_init(void)
 	lv_obj_t * left = lv_obj_create(row2);
 	lv_obj_set_size(left, LV_PCT(50), LV_PCT(100));
 	clean(left);
-	lv_obj_set_style_bg_color(left, lv_color_hex(0x06D6A0), 0);
+	lv_obj_set_style_bg_color(left, COLOR_BG_DARK, 0);
 	weather_widget = today_weather_create(left);
 	lv_obj_set_size(weather_widget,
 									LV_PCT(100),
-									LV_PCT(100));
+									LV_PCT(40));
+	weather_chart = create_weather_chart(left);
+	lv_obj_align(weather_chart->chart, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+	lv_obj_set_style_border_width(left, 2, LV_PART_MAIN);
+	lv_obj_set_style_border_color(left, GRAY, LV_PART_MAIN);
+	lv_obj_set_style_border_side(left, LV_BORDER_SIDE_RIGHT, LV_PART_MAIN);
 
 	/* RIGHT */
 	lv_obj_t * right = lv_obj_create(row2);
