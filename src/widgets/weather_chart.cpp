@@ -3,8 +3,13 @@
 #include <theme/colors.h>
 #include <stdio.h>
 #include <cmath>
+#include <time.h>
 
 int32_t y_vals_int[8];
+
+const char *all_ticks[] = {"00", "03", "06", "09", "12", "15", "18", "21"};
+const int TICKS_COUNT = 8;
+const char *x_ticks[TICKS_COUNT];
 
 static void chart_event_cb(lv_event_t *e)
 {
@@ -58,8 +63,21 @@ static void chart_event_cb(lv_event_t *e)
     label_dsc.align = LV_TEXT_ALIGN_RIGHT;
     lv_draw_label(layer, &label_dsc, &area_y);
 
-    // --- X AXIS (HOURS: 00, 03...21) ---
-    const char *x_ticks[] = {"00", "03", "06", "09", "12", "15", "18", "21"};
+    // Get the current time
+    time_t now = time(nullptr);
+    struct tm *tm_info = localtime(&now);
+    int hour_now = tm_info->tm_hour;
+
+    // Index of the nearest 3-hour mark
+    int start_index = hour_now / 3;
+
+    // Forming x_ticks for the chart
+    for (int i = 0; i < TICKS_COUNT; i++)
+    {
+      x_ticks[i] = all_ticks[(start_index + i) % TICKS_COUNT];
+    }
+
+    char buf[4];
     for (int i = 0; i < 8; i++)
     {
       int32_t x = chart_area.x1 + (i * chart_w / 7);
@@ -68,7 +86,9 @@ static void chart_event_cb(lv_event_t *e)
       area_x.x2 = x + 20;
       area_x.y1 = chart_area.y2 + 5;
       area_x.y2 = chart_area.y2 + 25;
-      label_dsc.text = x_ticks[i];
+
+      sprintf(buf, "%s", x_ticks[i]);
+      label_dsc.text = buf;
       label_dsc.align = LV_TEXT_ALIGN_CENTER;
       lv_draw_label(layer, &label_dsc, &area_x);
     }
@@ -132,7 +152,7 @@ weather_chart_t *create_weather_chart(lv_obj_t *parent)
 
   wc->series = lv_chart_add_series(
       wc->chart,
-      lv_color_hex(0x00E0FF),
+      CYAN,
       LV_CHART_AXIS_PRIMARY_Y);
 
   wc->event_data = (chart_event_data_t *)lv_malloc(sizeof(chart_event_data_t));

@@ -4,10 +4,10 @@
 
 static void btn_settings_event(lv_event_t * e)
 {
-    screen_settings_init();
-    lv_scr_load_anim(screen_settings_get(),
-                     LV_SCR_LOAD_ANIM_MOVE_LEFT,
-                     150, 0, false);
+	screen_settings_init();
+	lv_scr_load_anim(screen_settings_get(),
+									 LV_SCR_LOAD_ANIM_MOVE_LEFT,
+									 0, 0, false);
 }
 
 lv_obj_t * create_settings_icon(lv_obj_t * parent)

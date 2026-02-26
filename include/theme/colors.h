@@ -11,6 +11,7 @@
 #define MIDDLE_BLUE lv_color_hex(0x4DA6FF)
 #define LIGHT_BLUE lv_color_hex(0x5BABC2)
 #define GREEN lv_color_hex(0x94806E)
+#define CYAN lv_color_hex(0x4DD0E1)
 
 #define COLOR_PRIMARY        lv_color_hex(0x3A86FF)
 #define COLOR_SECONDARY      lv_color_hex(0x8338EC)
