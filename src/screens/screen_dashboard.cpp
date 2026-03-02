@@ -7,6 +7,7 @@
 #include "kp_chart.h"
 #include <settings_button.h>
 #include "weather_chart.h"
+#include "weather_week.h"
 
 static lv_obj_t *screen;
 static lv_obj_t *wifi_widget;
@@ -14,9 +15,10 @@ static lv_obj_t *weather_widget;
 static lv_obj_t *settings_button;
 static kp_chart_t *kp_chart_widget;
 static weather_chart_t *weather_chart;
+static weather_week_widget *weather_week;
 
 static int32_t x_values[] = {0, 3, 6, 9, 12, 15, 18, 21};
-float kp_test[KP_FORECAST_DAYS] = {5.33, 3.67, 2.67, 1.67};
+static int week_days = 7;
 
 static void wifi_update_timer(lv_timer_t *timer)
 {
@@ -50,14 +52,15 @@ void dashboard_set_weather(const WeatherData &data)
 		today_weather_set_data(weather_widget, data);
 		kp_chart_set_data(kp_chart_widget, data);
 		set_weather_chart_data(weather_chart, x_values, data.hourly_temp, 8);
+		weather_week_update(weather_week, data.daily);
 	}
 }
 
 static void clean(lv_obj_t * obj)
 {
 	lv_obj_set_style_pad_all(obj, 0, 0);
-	lv_obj_set_style_pad_row(obj, 0, 0);      // ВАЖЛИВО
-	lv_obj_set_style_pad_column(obj, 0, 0);   // ВАЖЛИВО
+	lv_obj_set_style_pad_row(obj, 0, 0);
+	lv_obj_set_style_pad_column(obj, 0, 0);
 	lv_obj_set_style_margin_all(obj, 0, 0);
 	lv_obj_set_style_border_width(obj, 0, 0);
 	lv_obj_set_style_radius(obj, 0, 0);
@@ -149,7 +152,9 @@ void screen_dashboard_init(void)
 	lv_obj_t * top = lv_obj_create(right);
 	lv_obj_set_size(top, LV_PCT(100), LV_PCT(50));
 	clean(top);
-	lv_obj_set_style_bg_color(top, lv_color_hex(0xFFD166), 0);
+	// lv_obj_set_style_bg_color(top, lv_color_hex(0xFFD166), 0);
+	lv_obj_set_style_bg_color(top, COLOR_BG_DARK, 0);
+	weather_week = weather_week_create(top, week_days);
 
 	/* BOTTOM */
 	lv_obj_t * bottom = lv_obj_create(right);
