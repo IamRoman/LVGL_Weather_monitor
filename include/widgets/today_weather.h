@@ -8,6 +8,8 @@ typedef struct
   lv_obj_t *label_hum;
   lv_obj_t *label_press;
   lv_obj_t *icon;
+  lv_obj_t *description;
+  lv_obj_t *wind_data;
 } weather_widget_t;
 
 lv_obj_t * today_weather_create(lv_obj_t * parent);

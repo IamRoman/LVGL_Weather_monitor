@@ -11,8 +11,6 @@
 #define NOAA_PORT 443
 
 static const char *API_KEY = "d0e4132a4b555118a94675b394ef386f";
-static const char* CITY = "Vinnytsia";
-static const char* COUNTRY = "UA";
 
 /* =========================
 	 NTP INIT (once)
@@ -64,7 +62,7 @@ void get_NOAA_weather(WeatherData &data)
 
 			String payload = forecastClient.readString();
 
-			StaticJsonDocument<12000> doc;
+			JsonDocument doc;
 			DeserializationError err = deserializeJson(doc, payload);
 
 			if (!err)
@@ -148,7 +146,7 @@ void get_NOAA_weather(WeatherData &data)
 /* =========================
 	 WEATHER UPDATE
 	 ========================= */
-bool weather_update(WeatherData &data)
+bool weather_update(WeatherData &data, double lat, double lon)
 {
 	if (WiFi.status() != WL_CONNECTED)
 	{
@@ -170,10 +168,10 @@ bool weather_update(WeatherData &data)
 
 	Serial.println("Connected!");
 
-	String url = "/data/2.5/forecast?q=";
-	url += CITY;
-	url += ",";
-	url += COUNTRY;
+	String url = "/data/2.5/forecast?lat=";
+	url += String(lat, 6);
+	url += "&lon=";
+	url += String(lon, 6);
 	url += "&appid=";
 	url += API_KEY;
 	url += "&units=metric";
@@ -203,8 +201,7 @@ bool weather_update(WeatherData &data)
 
 	Serial.println("Parsing JSON...");
 
-	StaticJsonDocument<6144> doc;
-
+	JsonDocument doc;
 	DeserializationError error = deserializeJson(doc, client);
 
 	if (error)
@@ -215,13 +212,52 @@ bool weather_update(WeatherData &data)
 		return false;
 	}
 
-	// Current temperature (first in the list)
-	data.temperature = doc["list"][0]["main"]["temp"] | 0.0;
-	data.humidity = doc["list"][0]["main"]["humidity"] | 0;
-	data.pressure = doc["list"][0]["main"]["pressure"] | 0;
-	data.weather_id = doc["list"][0]["weather"][0]["id"] | 0;
-
 	JsonArray list = doc["list"];
+
+	// =========================
+	// CURRENT WEATHER
+	// =========================
+
+	data.temperature = list[0]["main"]["temp"] | 0.0;
+	data.humidity = list[0]["main"]["humidity"] | 0;
+	data.pressure = list[0]["main"]["pressure"] | 0;
+	data.weather_id = list[0]["weather"][0]["id"] | 0;
+
+	const char *desc = list[0]["weather"][0]["description"] | "";
+	strncpy(data.description, desc, DESC_LEN - 1);
+	data.description[DESC_LEN - 1] = '\0';
+
+	const char *icon = list[0]["weather"][0]["icon"] | "";
+	strncpy(data.icon, icon, 4);
+	data.icon[4] = '\0';
+
+	// --- WIND ---
+	data.wind_speed = list[0]["wind"]["speed"] | 0.0;
+	data.wind_deg = list[0]["wind"]["deg"] | 0;
+
+	// Converting degrees to direction
+	int deg = data.wind_deg;
+
+	if (deg >= 337 || deg < 23)
+		strcpy(data.wind_dir, "N");
+	else if (deg < 68)
+		strcpy(data.wind_dir, "NE");
+	else if (deg < 113)
+		strcpy(data.wind_dir, "E");
+	else if (deg < 158)
+		strcpy(data.wind_dir, "SE");
+	else if (deg < 203)
+		strcpy(data.wind_dir, "S");
+	else if (deg < 248)
+		strcpy(data.wind_dir, "SW");
+	else if (deg < 293)
+		strcpy(data.wind_dir, "W");
+	else
+		strcpy(data.wind_dir, "NW");
+
+	// =========================
+	// HOURLY
+	// =========================
 
 	for (int i = 0; i < FORECAST_SIZE && i < list.size(); i++)
 	{
@@ -231,6 +267,103 @@ bool weather_update(WeatherData &data)
 		Serial.print(i);
 		Serial.print(": ");
 		Serial.println(data.hourly_temp[i]);
+	}
+
+	// =========================
+	// DAILY AGGREGATION
+	// =========================
+
+	data.daily_count = 0;
+
+	for (int i = 0; i < list.size(); i++)
+	{
+		const char *dt_txt = list[i]["dt_txt"];
+		if (!dt_txt)
+			continue;
+
+		char date[11];
+		strncpy(date, dt_txt, 10);
+		date[10] = '\0';
+
+		int day_index = -1;
+
+		for (int d = 0; d < data.daily_count; d++)
+		{
+			if (strcmp(data.daily[d].date, date) == 0)
+			{
+				day_index = d;
+				break;
+			}
+		}
+
+		if (day_index == -1)
+		{
+			if (data.daily_count >= DAYS_COUNT)
+				continue;
+
+			day_index = data.daily_count++;
+
+			strcpy(data.daily[day_index].date, date);
+
+			data.daily[day_index].min_temp = 1000;
+			data.daily[day_index].max_temp = -1000;
+			data.daily[day_index].weather_id = 0;
+			data.daily[day_index].description[0] = '\0';
+			data.daily[day_index].icon[0] = '\0';
+		}
+
+		float temp = list[i]["main"]["temp"] | 0.0;
+
+		if (temp < data.daily[day_index].min_temp)
+			data.daily[day_index].min_temp = temp;
+
+		if (temp > data.daily[day_index].max_temp)
+			data.daily[day_index].max_temp = temp;
+
+		if (data.daily[day_index].weather_id == 0)
+		{
+			data.daily[day_index].weather_id =
+					list[i]["weather"][0]["id"] | 0;
+
+			const char *dsc =
+					list[i]["weather"][0]["description"] | "";
+
+			strncpy(data.daily[day_index].description,
+							dsc, DESC_LEN - 1);
+			data.daily[day_index].description[DESC_LEN - 1] = '\0';
+
+			const char *icn =
+					list[i]["weather"][0]["icon"] | "";
+
+			strncpy(data.daily[day_index].icon, icn, 4);
+			data.daily[day_index].icon[4] = '\0';
+		}
+	}
+
+	Serial.println("\n---- DAILY RESULT ----");
+
+	for (int d = 0; d < data.daily_count; d++)
+	{
+		Serial.print("Day ");
+		Serial.print(d);
+		Serial.print(" (");
+		Serial.print(data.daily[d].date);
+		Serial.println(")");
+
+		Serial.print("  Min: ");
+		Serial.println(data.daily[d].min_temp);
+
+		Serial.print("  Max: ");
+		Serial.println(data.daily[d].max_temp);
+
+		Serial.print("  ID: ");
+		Serial.println(data.daily[d].weather_id);
+
+		Serial.print("  Desc: ");
+		Serial.println(data.daily[d].description);
+
+		Serial.print("  Icon: ");
+		Serial.println(data.daily[d].icon);
 	}
 
 	client.stop();

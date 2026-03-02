@@ -10,11 +10,14 @@
 extern void display_init(void);
 extern void touch_init(void);
 
+#define LATITUDE 48.213889
+#define LONGITUDE 29.284722
+
 WeatherData weather;
 
 static void weather_timer_cb(lv_timer_t *timer)
 {
-	if (weather_update(weather))
+	if (weather_update(weather, LATITUDE, LONGITUDE))
 	{
 		dashboard_set_weather(weather);
 		Serial.println("Weather updated");
@@ -38,14 +41,14 @@ void setup()
 	weather_time_init();
 	ui_init();
 
-	if (weather_update(weather))
+	if (weather_update(weather, LATITUDE, LONGITUDE))
 	{
 		Serial.println("Weather updated");
 		Serial.println(weather.temperature);
 		dashboard_set_weather(weather);
 		// WiFi.disconnect(true);
 	}
-	// Таймер кожні 3хв
+	// Timer every 3 minutes
 	lv_timer_create(weather_timer_cb, 180000, NULL);
 
 	Serial.print("Free heap: ");
