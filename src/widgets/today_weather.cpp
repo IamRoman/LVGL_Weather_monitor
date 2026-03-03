@@ -46,11 +46,11 @@ lv_obj_t * today_weather_create(lv_obj_t * parent)
   lv_obj_set_size(right_cont, LV_PCT(60), LV_PCT(90));
   lv_obj_align(right_cont, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
 
-  // --- Віджет погоди ---
+  // --- Weather widget ---
   weather_widget_t *w = (weather_widget_t *)lv_malloc(sizeof(weather_widget_t));
   lv_obj_set_user_data(main_cont, w);
 
-  // --- Стилі ---
+  // --- Styles ---
   static lv_style_t style_primary_label;
   lv_style_init(&style_primary_label);
   lv_style_set_text_color(&style_primary_label, LIGHT_BLUE);
@@ -75,7 +75,7 @@ lv_obj_t * today_weather_create(lv_obj_t * parent)
   // --- Wind ---
   w->wind_data = lv_label_create(left_cont);
   lv_obj_add_style(w->wind_data, &style_secondary_label, 0);
-  lv_obj_align(w->wind_data, LV_ALIGN_CENTER, 10, 20);
+  lv_obj_align(w->wind_data, LV_ALIGN_CENTER, 5, 20);
 
   // --- Temperature ---
   w->label_temp = lv_label_create(right_cont);

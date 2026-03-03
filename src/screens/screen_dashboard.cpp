@@ -18,7 +18,7 @@ static weather_chart_t *weather_chart;
 static weather_week_widget *weather_week;
 
 static int32_t x_values[] = {0, 3, 6, 9, 12, 15, 18, 21};
-static int week_days = 7;
+static int week_days = 6;
 
 static void wifi_update_timer(lv_timer_t *timer)
 {
@@ -152,7 +152,6 @@ void screen_dashboard_init(void)
 	lv_obj_t * top = lv_obj_create(right);
 	lv_obj_set_size(top, LV_PCT(100), LV_PCT(50));
 	clean(top);
-	// lv_obj_set_style_bg_color(top, lv_color_hex(0xFFD166), 0);
 	lv_obj_set_style_bg_color(top, COLOR_BG_DARK, 0);
 	weather_week = weather_week_create(top, week_days);
 

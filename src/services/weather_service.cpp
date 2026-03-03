@@ -272,7 +272,6 @@ bool weather_update(WeatherData &data, double lat, double lon)
 	// =========================
 	// DAILY AGGREGATION
 	// =========================
-
 	data.daily_count = 0;
 
 	for (int i = 0; i < list.size(); i++)
@@ -281,12 +280,14 @@ bool weather_update(WeatherData &data, double lat, double lon)
 		if (!dt_txt)
 			continue;
 
+		// Cut out the date YYYY-MM-DD
 		char date[11];
 		strncpy(date, dt_txt, 10);
 		date[10] = '\0';
 
 		int day_index = -1;
 
+		// We are looking to see if this day is already here.
 		for (int d = 0; d < data.daily_count; d++)
 		{
 			if (strcmp(data.daily[d].date, date) == 0)
@@ -294,76 +295,50 @@ bool weather_update(WeatherData &data, double lat, double lon)
 				day_index = d;
 				break;
 			}
-		}
-
-		if (day_index == -1)
-		{
-			if (data.daily_count >= DAYS_COUNT)
-				continue;
-
-			day_index = data.daily_count++;
-
-			strcpy(data.daily[day_index].date, date);
-
-			data.daily[day_index].min_temp = 1000;
-			data.daily[day_index].max_temp = -1000;
-			data.daily[day_index].weather_id = 0;
-			data.daily[day_index].description[0] = '\0';
-			data.daily[day_index].icon[0] = '\0';
-		}
-
-		float temp = list[i]["main"]["temp"] | 0.0;
-
-		if (temp < data.daily[day_index].min_temp)
-			data.daily[day_index].min_temp = temp;
-
-		if (temp > data.daily[day_index].max_temp)
-			data.daily[day_index].max_temp = temp;
-
-		if (data.daily[day_index].weather_id == 0)
-		{
-			data.daily[day_index].weather_id =
-					list[i]["weather"][0]["id"] | 0;
-
-			const char *dsc =
-					list[i]["weather"][0]["description"] | "";
-
-			strncpy(data.daily[day_index].description,
-							dsc, DESC_LEN - 1);
-			data.daily[day_index].description[DESC_LEN - 1] = '\0';
-
-			const char *icn =
-					list[i]["weather"][0]["icon"] | "";
-
-			strncpy(data.daily[day_index].icon, icn, 4);
-			data.daily[day_index].icon[4] = '\0';
-		}
 	}
 
-	Serial.println("\n---- DAILY RESULT ----");
-
-	for (int d = 0; d < data.daily_count; d++)
+	// If the day is new
+	if (day_index == -1)
 	{
-		Serial.print("Day ");
-		Serial.print(d);
-		Serial.print(" (");
-		Serial.print(data.daily[d].date);
-		Serial.println(")");
+		if (data.daily_count >= DAYS_COUNT)
+			continue;
 
-		Serial.print("  Min: ");
-		Serial.println(data.daily[d].min_temp);
+		day_index = data.daily_count++;
+		strcpy(data.daily[day_index].date, date);
 
-		Serial.print("  Max: ");
-		Serial.println(data.daily[d].max_temp);
+		data.daily[day_index].min_temp = 1000;
+		data.daily[day_index].max_temp = -1000;
+		data.daily[day_index].weather_id = 0;
+		data.daily[day_index].description[0] = '\0';
+		data.daily[day_index].icon[0] = '\0';
+	}
 
-		Serial.print("  ID: ");
-		Serial.println(data.daily[d].weather_id);
+	// Current forecast temperature
+	float temp = list[i]["main"]["temp"] | 0.0;
 
-		Serial.print("  Desc: ");
-		Serial.println(data.daily[d].description);
+	// Мін/мак для дня
+	if (temp < data.daily[day_index].min_temp)
+		data.daily[day_index].min_temp = temp;
 
-		Serial.print("  Icon: ");
-		Serial.println(data.daily[d].icon);
+	if (temp > data.daily[day_index].max_temp)
+		data.daily[day_index].max_temp = temp;
+
+	// Current weather data
+	int weather_id = list[i]["weather"][0]["id"] | 0;
+	const char *desc = list[i]["weather"][0]["description"] | "";
+	const char *icon = list[i]["weather"][0]["icon"] | "";
+
+	// Choosing an icon and description for **warmest hour**
+	if (temp == data.daily[day_index].max_temp)
+	{
+		data.daily[day_index].weather_id = weather_id;
+
+		strncpy(data.daily[day_index].description, desc, DESC_LEN - 1);
+		data.daily[day_index].description[DESC_LEN - 1] = '\0';
+
+		strncpy(data.daily[day_index].icon, icon, 4);
+		data.daily[day_index].icon[4] = '\0';
+	}
 	}
 
 	client.stop();
