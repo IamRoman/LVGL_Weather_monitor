@@ -6,6 +6,7 @@
 #include <screen_home.h>
 #include <WiFi.h>
 #include <screen_dashboard.h>
+#include <config_service.h>
 
 extern void display_init(void);
 extern void touch_init(void);
@@ -31,6 +32,8 @@ static void weather_timer_cb(lv_timer_t *timer)
 void setup()
 {
 	Serial.begin(115200);
+
+	config_load(); // Load App State (NVS 16 КБ)
 
 	lv_init();
 

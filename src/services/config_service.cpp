@@ -22,3 +22,26 @@ void config_save()
 
   prefs.end();
 }
+
+void config_set_location(float lat, float lon)
+{
+  Serial.println("=== CONFIG SET LOCATION ===");
+  Serial.printf("Saving lat: %.6f\n", lat);
+  Serial.printf("Saving lon: %.6f\n", lon);
+
+  app.lat = lat;
+  app.lon = lon;
+
+  config_save();
+}
+
+bool config_get_location(float *lat, float *lon)
+{
+  *lat = app.lat;
+  *lon = app.lon;
+
+  Serial.printf("Loaded from RAM lat: %.6f\n", *lat);
+  Serial.printf("Loaded from RAM lon: %.6f\n", *lon);
+
+  return true;
+}
