@@ -11,14 +11,22 @@
 extern void display_init(void);
 extern void touch_init(void);
 
-#define LATITUDE 48.213889
+#define LATITUDE 48.213889 // Verbka
 #define LONGITUDE 29.284722
 
 WeatherData weather;
 
-static void weather_timer_cb(lv_timer_t *timer)
+void update_weather(void)
 {
-	if (weather_update(weather, LATITUDE, LONGITUDE))
+	float lat, lon;
+
+	if (!config_get_location(&lat, &lon))
+	{
+		Serial.println("Failed to get location");
+		return;
+	}
+
+	if (weather_update(weather, lat, lon))
 	{
 		dashboard_set_weather(weather);
 		Serial.println("Weather updated");
@@ -27,6 +35,11 @@ static void weather_timer_cb(lv_timer_t *timer)
 	{
 		Serial.println("Weather update failed");
 	}
+}
+
+static void weather_timer_cb(lv_timer_t *timer)
+{
+	update_weather();
 }
 
 void setup()
@@ -44,10 +57,17 @@ void setup()
 	weather_time_init();
 	ui_init();
 
-	if (weather_update(weather, LATITUDE, LONGITUDE))
+	float lat, lon;
+
+	if (!config_get_location(&lat, &lon))
+	{
+		Serial.println("Failed to get location");
+		return;
+	}
+
+	if (weather_update(weather, lat, lon))
 	{
 		Serial.println("Weather updated");
-		Serial.println(weather.temperature);
 		dashboard_set_weather(weather);
 		// WiFi.disconnect(true);
 	}

@@ -5,6 +5,9 @@
 #include <screen_settings.h>
 #include <cstdio>
 #include <config_service.h>
+#include <loader.h>
+
+extern void update_weather(void);
 
 static lv_obj_t *screen;
 static lv_obj_t *anim_cont;
@@ -106,6 +109,11 @@ static void confirm_event_cb(lv_event_t *e)
   lv_label_set_text(selected_location, buf_long);
 
   anim_screen(false);
+
+  loader_show(screen);
+  lv_refr_now(NULL);
+  update_weather();
+  loader_hide();
 }
 
 static void keyboard_event_cb(lv_event_t *e)
@@ -124,6 +132,11 @@ static void keyboard_event_cb(lv_event_t *e)
     lv_label_set_text(selected_location, buf_long);
 
     anim_screen(false);
+
+    loader_show(screen);
+    lv_refr_now(NULL);
+    update_weather();
+    loader_hide();
   }
 }
 
@@ -164,7 +177,7 @@ void screen_location_init(void)
   /* Selected location */
   selected_location = lv_label_create(anim_cont);
   lv_label_set_text(selected_location, "Selected location: --,--");
-  lv_obj_align(selected_location, LV_ALIGN_TOP_MID, 0, 35);
+  lv_obj_align(selected_location, LV_ALIGN_TOP_MID, 0, 45);
   lv_obj_add_style(selected_location, &style_secondary_label, 0);
 
   /*--- Back Button ---*/
@@ -222,11 +235,38 @@ void screen_location_init(void)
   lv_style_set_bg_opa(&style_ta_cursor, LV_OPA_COVER);
   lv_style_set_width(&style_ta_cursor, 1);
 
+  /* ===== Label style ===== */
+  static lv_style_t style_input_label;
+  lv_style_init(&style_input_label);
+  lv_style_set_text_color(&style_input_label, WHITE);
+  lv_style_set_text_font(&style_input_label, &lv_font_montserrat_14);
+
   /* ===== Latitude ===== */
 
-  ta_lat = lv_textarea_create(anim_cont);
+  lv_obj_t *row_lat = lv_obj_create(anim_cont);
+  lv_obj_set_width(row_lat, LV_PCT(100));
+  lv_obj_set_height(row_lat, LV_SIZE_CONTENT);
+  lv_obj_align(row_lat, LV_ALIGN_TOP_MID, 0, 130);
+
+  lv_obj_set_style_bg_opa(row_lat, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_opa(row_lat, LV_OPA_TRANSP, 0);
+
+  lv_obj_set_flex_flow(row_lat, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(row_lat,
+                        LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER);
+
+  lv_obj_set_style_pad_gap(row_lat, 10, 0);
+
+  /*Latitude Label*/
+  lv_obj_t *lbl_lat = lv_label_create(row_lat);
+  lv_label_set_text(lbl_lat, "Lat:   ");
+  lv_obj_add_style(lbl_lat, &style_input_label, 0);
+  /*Latitude Input*/
+  ta_lat = lv_textarea_create(row_lat);
   lv_obj_set_size(ta_lat, 200, 40);
-  lv_obj_align(ta_lat, LV_ALIGN_TOP_MID, 0, 150);
+  // lv_obj_align(ta_lat, LV_ALIGN_TOP_MID, 0, 150);
   lv_textarea_set_placeholder_text(ta_lat, "Latitude");
 
   lv_obj_add_style(ta_lat, &style_ta_main, LV_PART_MAIN);
@@ -237,10 +277,29 @@ void screen_location_init(void)
   lv_keyboard_set_textarea(kb, ta_lat);
 
   // /* ===== Longitude ===== */
+  lv_obj_t *row_lon = lv_obj_create(anim_cont);
+  lv_obj_set_width(row_lon, LV_PCT(100));
+  lv_obj_set_height(row_lon, LV_SIZE_CONTENT);
+  lv_obj_align(row_lon, LV_ALIGN_TOP_MID, 0, 180);
 
-  ta_lon = lv_textarea_create(anim_cont);
+  lv_obj_set_style_bg_opa(row_lon, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_opa(row_lon, LV_OPA_TRANSP, 0);
+
+  lv_obj_set_flex_flow(row_lon, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(row_lon,
+                        LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER);
+
+  lv_obj_set_style_pad_gap(row_lon, 10, 0);
+  /*Longitude Label*/
+  lv_obj_t *lbl_lon = lv_label_create(row_lon);
+  lv_label_set_text(lbl_lon, "Long:");
+  lv_obj_add_style(lbl_lon, &style_input_label, 0);
+  /*Longitude Input*/
+  ta_lon = lv_textarea_create(row_lon);
   lv_obj_set_size(ta_lon, 200, 40);
-  lv_obj_align(ta_lon, LV_ALIGN_TOP_MID, 0, 200);
+  // lv_obj_align(ta_lon, LV_ALIGN_TOP_MID, 0, 200);
   lv_textarea_set_placeholder_text(ta_lon, "Longitude");
 
   lv_obj_add_style(ta_lon, &style_ta_main, LV_PART_MAIN);
@@ -256,9 +315,9 @@ void screen_location_init(void)
   lv_obj_set_style_bg_opa(btn_confirm, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_opa(btn_confirm, LV_OPA_TRANSP, 0);
 
-  lv_obj_set_size(btn_confirm, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_size(btn_confirm, LV_SIZE_CONTENT, 40);
 
-  lv_obj_align(btn_confirm, LV_ALIGN_TOP_RIGHT, -10, 10);
+  lv_obj_align(btn_confirm, LV_ALIGN_TOP_RIGHT, -10, 12);
 
   // Making a horizontal layout
   lv_obj_set_flex_flow(btn_confirm, LV_FLEX_FLOW_ROW);

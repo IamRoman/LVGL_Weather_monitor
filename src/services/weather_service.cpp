@@ -176,6 +176,9 @@ bool weather_update(WeatherData &data, double lat, double lon)
 	url += API_KEY;
 	url += "&units=metric";
 
+	Serial.print("url: ");
+	Serial.println(url);
+
 	client.print(String("GET ") + url + " HTTP/1.1\r\n" +
 							 "Host: " + OWM_HOST + "\r\n" +
 							 "Connection: close\r\n\r\n");

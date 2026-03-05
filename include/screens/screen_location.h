@@ -14,6 +14,7 @@ static const City cities[] = {
     {"Odesa", 46.4825, 30.7233},
     {"Kharkiv", 49.9935, 36.2304},
     {"Dnipro", 48.4647, 35.0462},
+    {"Verbka", 48.213889, 29.284722},
     {"Custom", 0.0, 0.0}};
 
 #define CITY_COUNT (sizeof(cities) / sizeof(cities[0]))

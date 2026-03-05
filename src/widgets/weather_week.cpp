@@ -81,7 +81,7 @@ void weather_week_update(weather_week_widget * w, const DailyForecast * daily)
 
 		// Temperature min - max
 		char buf[16];
-		snprintf(buf, sizeof(buf), "%.0f-%.0f°", daily[i].min_temp, daily[i].max_temp);
+		snprintf(buf, sizeof(buf), "%.0f  %.0f°", daily[i].min_temp, daily[i].max_temp);
 		lv_label_set_text(w->items[i].label_temp, buf);
 
 		// Icon
