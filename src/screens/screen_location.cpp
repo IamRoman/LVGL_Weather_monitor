@@ -7,7 +7,7 @@
 #include <config_service.h>
 #include <loader.h>
 
-extern void update_weather(void);
+extern void start_weather_update(void);
 
 static lv_obj_t *screen;
 static lv_obj_t *anim_cont;
@@ -110,10 +110,7 @@ static void confirm_event_cb(lv_event_t *e)
 
   anim_screen(false);
 
-  loader_show(screen);
-  lv_refr_now(NULL);
-  update_weather();
-  loader_hide();
+  start_weather_update();
 }
 
 static void keyboard_event_cb(lv_event_t *e)
@@ -133,10 +130,7 @@ static void keyboard_event_cb(lv_event_t *e)
 
     anim_screen(false);
 
-    loader_show(screen);
-    lv_refr_now(NULL);
-    update_weather();
-    loader_hide();
+    start_weather_update();
   }
 }
 
