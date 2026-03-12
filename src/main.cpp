@@ -17,10 +17,20 @@ extern void touch_init(void);
 
 WeatherData weather;
 
-struct WeatherResult
+QueueHandle_t weather_queue;
+
+static bool weather_running = false;
+
+typedef struct
+{
+	float lat;
+	float lon;
+} WeatherRequest;
+
+typedef struct
 {
 	bool ok;
-};
+} WeatherResult;
 
 // --------------------
 // UI callback
@@ -41,28 +51,27 @@ void weather_ui_update(void *data)
 
 	loader_hide();
 
-	delete res; // freeing memory
+	weather_running = false;
 }
 
 // --------------------------------------------------
-// FreeRTOS task (HTTP)
+// FreeRTOS worker (HTTP)
 // --------------------------------------------------
-void weather_task(void *pv)
+void weather_worker(void *pv)
 {
-	float lat, lon;
+	WeatherRequest req;
 
-	if (!config_get_location(&lat, &lon))
+	while (true)
 	{
-		vTaskDelete(NULL);
-		return;
+		if (xQueueReceive(weather_queue, &req, portMAX_DELAY))
+		{
+			WeatherResult res;
+
+			res.ok = weather_update(weather, req.lat, req.lon);
+
+			lv_async_call(weather_ui_update, &res);
+		}
 	}
-
-	WeatherResult *res = new WeatherResult;
-	res->ok = weather_update(weather, lat, lon);
-
-	lv_async_call(weather_ui_update, res);
-
-	vTaskDelete(NULL);
 }
 
 void update_weather(void)
@@ -88,15 +97,27 @@ void update_weather(void)
 
 void start_weather_update()
 {
+	if (weather_running)
+	{
+		Serial.println("Weather already running");
+		return;
+	}
+
+	weather_running = true;
+
+	float lat, lon;
+
+	if (!config_get_location(&lat, &lon))
+		return;
+
+	WeatherRequest req;
+
+	req.lat = lat;
+	req.lon = lon;
+
 	loader_show(lv_layer_top());
 
-	xTaskCreate(
-			weather_task,
-			"weather_task",
-			8192, // stack
-			NULL,
-			1,
-			NULL);
+	xQueueSend(weather_queue, &req, 0);
 }
 
 static void weather_timer_cb(lv_timer_t *timer)
@@ -119,22 +140,22 @@ void setup()
 	weather_time_init();
 	ui_init();
 
-	float lat, lon;
+	weather_queue = xQueueCreate(2, sizeof(WeatherRequest));
 
-	if (!config_get_location(&lat, &lon))
-	{
-		Serial.println("Failed to get location");
-		return;
-	}
+	xTaskCreate(
+			weather_worker,
+			"weather_worker",
+			8192,
+			NULL,
+			1,
+			NULL);
 
-	if (weather_update(weather, lat, lon))
-	{
-		Serial.println("Weather updated");
-		dashboard_set_weather(weather);
-		// WiFi.disconnect(true);
-	}
-	// Timer every 3 minutes
-	lv_timer_create(weather_timer_cb, 180000, NULL);
+	start_weather_update();
+
+	lv_timer_create([](lv_timer_t *t)
+									{ start_weather_update(); },
+									180000,
+									NULL);
 
 	Serial.print("Free heap: ");
 	Serial.println(ESP.getFreeHeap());
