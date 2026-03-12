@@ -16,6 +16,28 @@ static lv_style_t style_secondary_label;
 static lv_style_t style_ta_main;
 static lv_style_t style_ta_cursor;
 
+static lv_obj_t *kb;
+
+static lv_obj_t *wifi_popup;
+
+static void ta_event_cb(lv_event_t *e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = (lv_obj_t *)lv_event_get_target(e);
+  lv_obj_t *kb = (lv_obj_t *)lv_event_get_user_data(e);
+  if (code == LV_EVENT_FOCUSED)
+  {
+    lv_keyboard_set_textarea(kb, ta);
+    lv_obj_remove_flag(kb, LV_OBJ_FLAG_HIDDEN);
+  }
+  else if (code == LV_EVENT_DEFOCUSED)
+  {
+    lv_keyboard_set_textarea(kb, NULL);
+    lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_delete(wifi_popup);
+  }
+};
+
 static void wifi_screen_event(lv_event_t *e)
 {
   if (lv_event_get_code(e) == LV_EVENT_DELETE)
@@ -30,27 +52,30 @@ static void wifi_screen_event(lv_event_t *e)
 
 static void connect_wifi_event(lv_event_t *e)
 {
-  const char *pass = lv_textarea_get_text(password_ta);
-  Serial.printf("Connecting to %s\n", selected_ssid);
-  WiFi.begin(selected_ssid, pass);
+  // const char *pass = lv_textarea_get_text(password_ta);
+  // Serial.printf("Connecting to %s\n", selected_ssid);
+  // WiFi.begin(selected_ssid, pass);
+  lv_obj_delete(wifi_popup);
 }
 
 static void show_password_dialog(const char *ssid)
 {
   strcpy(selected_ssid, ssid);
 
-  lv_obj_t *modal = lv_obj_create(screen);
-  lv_obj_set_size(modal, 260, 160);
-  lv_obj_align(modal, LV_ALIGN_TOP_MID, 0, 0);
-  // lv_obj_center(modal);
-  lv_obj_set_style_bg_color(modal, COLOR_BG_DARK, 0);
+  wifi_popup = lv_obj_create(screen);
+  lv_obj_set_size(wifi_popup, 260, 160);
+  lv_obj_align(wifi_popup, LV_ALIGN_TOP_MID, 0, 0);
+  lv_obj_set_style_bg_color(wifi_popup, COLOR_BG_MODAL_DARK, 0);
+  lv_obj_set_style_border_width(wifi_popup, 2, 0);
+  lv_obj_set_style_border_color(wifi_popup, MODAL_BORDER, 0);
+  lv_obj_clear_flag(wifi_popup, LV_OBJ_FLAG_SCROLLABLE);
 
-  lv_obj_t *label = lv_label_create(modal);
+  lv_obj_t *label = lv_label_create(wifi_popup);
   lv_label_set_text_fmt(label, "%s", ssid);
   lv_obj_add_style(label, &style_secondary_label, 0);
   lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
 
-  password_ta = lv_textarea_create(modal);
+  password_ta = lv_textarea_create(wifi_popup);
   lv_obj_set_size(password_ta, 220, 40);
   lv_textarea_set_password_mode(password_ta, true);
   lv_textarea_set_placeholder_text(password_ta, "Password");
@@ -59,15 +84,37 @@ static void show_password_dialog(const char *ssid)
   lv_obj_add_style(password_ta, &style_ta_main, LV_PART_MAIN);
   lv_obj_add_style(password_ta, &style_ta_cursor, LV_PART_CURSOR);
 
-  lv_obj_t *btn = lv_button_create(modal);
-  lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, 0);
-  lv_obj_set_style_bg_opa(btn, LV_OPA_TRANSP, LV_PART_MAIN);
+  /*Event keyboard*/
+  lv_obj_add_event_cb(password_ta, ta_event_cb, LV_EVENT_ALL, kb);
+  lv_keyboard_set_textarea(kb, password_ta);
 
-  lv_obj_t *lbl = lv_label_create(btn);
-  lv_label_set_text(lbl, "Connect");
-  lv_obj_center(lbl);
+  /*Connect button*/
+  lv_obj_t *btn_connect = lv_button_create(wifi_popup);
+  lv_obj_align(btn_connect, LV_ALIGN_BOTTOM_RIGHT, -5, 5);
+  lv_obj_set_style_bg_color(btn_connect, LIGHT_BLUE, LV_PART_MAIN);
+  lv_obj_set_style_border_width(btn_connect, 1, LV_PART_MAIN);
+  lv_obj_set_style_border_color(btn_connect, LIGHT_BLUE, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(btn_connect, 0, LV_PART_MAIN);
 
-  lv_obj_add_event_cb(btn, connect_wifi_event, LV_EVENT_CLICKED, NULL);
+  lv_obj_t *lbl_connect = lv_label_create(btn_connect);
+  lv_label_set_text(lbl_connect, "Connect");
+  lv_obj_center(lbl_connect);
+
+  lv_obj_add_event_cb(btn_connect, connect_wifi_event, LV_EVENT_CLICKED, NULL);
+
+  /*Cancel button*/
+  lv_obj_t *btn_cancel = lv_button_create(wifi_popup);
+  lv_obj_align(btn_cancel, LV_ALIGN_BOTTOM_LEFT, 5, 5);
+  lv_obj_set_style_bg_opa(btn_cancel, LV_OPA_TRANSP, LV_PART_MAIN);
+  lv_obj_set_style_border_width(btn_cancel, 1, LV_PART_MAIN);
+  lv_obj_set_style_border_color(btn_cancel, LIGHT_BLUE, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(btn_cancel, 0, LV_PART_MAIN);
+
+  lv_obj_t *lbl_cancel = lv_label_create(btn_cancel);
+  lv_label_set_text(lbl_cancel, "Cancel");
+  lv_obj_center(lbl_cancel);
+
+  lv_obj_add_event_cb(btn_cancel, connect_wifi_event, LV_EVENT_CLICKED, NULL);
 }
 
 static void wifi_item_event(lv_event_t *e)
@@ -76,6 +123,8 @@ static void wifi_item_event(lv_event_t *e)
   const char *txt = lv_list_get_button_text(wifi_list, btn);
 
   show_password_dialog(txt);
+  lv_obj_add_state(password_ta, LV_STATE_FOCUSED);
+  lv_obj_remove_flag(kb, LV_OBJ_FLAG_HIDDEN);
 }
 
 void wifi_start_scan()
@@ -134,6 +183,15 @@ static void wifi_timer_cb(lv_timer_t *t)
   wifi_scan_task();
 }
 
+static void keyboard_event_cb(lv_event_t *e)
+{
+  lv_event_code_t code = lv_event_get_code(e);
+
+  if (code == LV_EVENT_READY)
+  {
+  }
+}
+
 void screen_wifi_init(void)
 {
 	screen = lv_obj_create(NULL);
@@ -175,6 +233,12 @@ void screen_wifi_init(void)
   lv_obj_set_style_bg_opa(wifi_list, LV_OPA_TRANSP, LV_PART_MAIN);
   lv_obj_set_style_border_opa(wifi_list, LV_OPA_TRANSP, LV_PART_MAIN);
   lv_obj_align(wifi_list, LV_ALIGN_CENTER, 0, 0);
+
+  /* ===== Keyboard ===== */
+  kb = lv_keyboard_create(screen);
+  lv_obj_set_size(kb, LV_PCT(100), 150);
+  lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN); // hidden at first
+  lv_obj_add_event_cb(kb, keyboard_event_cb, LV_EVENT_ALL, NULL);
 
   wifi_start_scan();
 

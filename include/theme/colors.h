@@ -19,6 +19,7 @@
 
 // ===== background =====
 #define COLOR_BG_DARK        lv_color_hex(0x1e1e2f)
+#define COLOR_BG_MODAL_DARK lv_color_hex(0x2d2d44)
 #define COLOR_BG_LIGHT       lv_color_hex(0x2A2A40)
 
 // ===== Text =====
@@ -29,3 +30,6 @@
 #define COLOR_SUCCESS        lv_color_hex(0x06D6A0)
 #define COLOR_WARNING        lv_color_hex(0xFFD166)
 #define COLOR_ERROR          lv_color_hex(0xEF476F)
+
+// ===== Border ====
+#define MODAL_BORDER lv_color_hex(0x3E3E5E)
