@@ -19,6 +19,7 @@ static lv_style_t style_ta_cursor;
 static lv_obj_t *kb;
 
 static lv_obj_t *wifi_popup;
+static lv_obj_t *eye_label;
 
 static void ta_event_cb(lv_event_t *e)
 {
@@ -52,10 +53,24 @@ static void wifi_screen_event(lv_event_t *e)
 
 static void connect_wifi_event(lv_event_t *e)
 {
-  // const char *pass = lv_textarea_get_text(password_ta);
-  // Serial.printf("Connecting to %s\n", selected_ssid);
-  // WiFi.begin(selected_ssid, pass);
+  const char *pass = lv_textarea_get_text(password_ta);
+  Serial.printf("Connecting to %s\n", selected_ssid);
+  WiFi.begin(selected_ssid, pass);
   lv_obj_delete(wifi_popup);
+  lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+}
+
+static void cancel_connect_wifi_event(lv_event_t *e)
+{
+  lv_obj_delete(wifi_popup);
+  lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+}
+
+static void toggle_password(lv_event_t *e)
+{
+  bool eye_hidden = lv_textarea_get_password_mode(password_ta);
+  lv_label_set_text(eye_label, !eye_hidden ? LV_SYMBOL_EYE_CLOSE : LV_SYMBOL_EYE_OPEN);
+  lv_textarea_set_password_mode(password_ta, !eye_hidden);
 }
 
 static void show_password_dialog(const char *ssid)
@@ -63,7 +78,7 @@ static void show_password_dialog(const char *ssid)
   strcpy(selected_ssid, ssid);
 
   wifi_popup = lv_obj_create(screen);
-  lv_obj_set_size(wifi_popup, 260, 160);
+  lv_obj_set_size(wifi_popup, 300, 160);
   lv_obj_align(wifi_popup, LV_ALIGN_TOP_MID, 0, 0);
   lv_obj_set_style_bg_color(wifi_popup, COLOR_BG_MODAL_DARK, 0);
   lv_obj_set_style_border_width(wifi_popup, 2, 0);
@@ -75,12 +90,34 @@ static void show_password_dialog(const char *ssid)
   lv_obj_add_style(label, &style_secondary_label, 0);
   lv_obj_align(label, LV_ALIGN_TOP_MID, 0, 0);
 
-  password_ta = lv_textarea_create(wifi_popup);
-  lv_obj_set_size(password_ta, 220, 40);
+  lv_obj_t *row_input = lv_obj_create(wifi_popup);
+  lv_obj_set_size(row_input, LV_PCT(100), LV_SIZE_CONTENT);
+  lv_obj_align(row_input, LV_ALIGN_CENTER, 0, -5);
+  lv_obj_clear_flag(row_input, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_style_bg_opa(row_input, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_opa(row_input, LV_OPA_TRANSP, 0);
+  lv_obj_set_flex_flow(row_input, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(row_input,
+                        LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER,
+                        LV_FLEX_ALIGN_CENTER);
+  /*Show password*/
+  lv_obj_t *btn_show = lv_button_create(row_input);
+  lv_obj_align(btn_show, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_bg_color(btn_show, LIGHT_BLUE, LV_PART_MAIN);
+  lv_obj_set_style_shadow_width(btn_show, 0, LV_PART_MAIN);
+  lv_obj_add_event_cb(btn_show, toggle_password, LV_EVENT_CLICKED, NULL);
+
+  eye_label = lv_label_create(btn_show);
+  lv_label_set_text(eye_label, LV_SYMBOL_EYE_CLOSE);
+  lv_obj_center(eye_label);
+
+  password_ta = lv_textarea_create(row_input);
+  lv_obj_set_size(password_ta, 200, 40);
   lv_textarea_set_password_mode(password_ta, true);
   lv_textarea_set_placeholder_text(password_ta, "Password");
 
-  lv_obj_align(password_ta, LV_ALIGN_CENTER, 0, -5);
+  lv_obj_align(password_ta, LV_ALIGN_CENTER, 0, 0);
   lv_obj_add_style(password_ta, &style_ta_main, LV_PART_MAIN);
   lv_obj_add_style(password_ta, &style_ta_cursor, LV_PART_CURSOR);
 
@@ -114,7 +151,7 @@ static void show_password_dialog(const char *ssid)
   lv_label_set_text(lbl_cancel, "Cancel");
   lv_obj_center(lbl_cancel);
 
-  lv_obj_add_event_cb(btn_cancel, connect_wifi_event, LV_EVENT_CLICKED, NULL);
+  lv_obj_add_event_cb(btn_cancel, cancel_connect_wifi_event, LV_EVENT_CLICKED, NULL);
 }
 
 static void wifi_item_event(lv_event_t *e)
