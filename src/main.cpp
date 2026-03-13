@@ -67,7 +67,7 @@ void weather_worker(void *pv)
 			WeatherResult *res = new WeatherResult();
 
 			if (WiFi.status() == WL_CONNECTED)
-				res->ok = weather_update(weather, req.lat, req.lon);
+				res->ok = weather_update_all(weather, req.lat, req.lon);
 			else
 				res->ok = false;
 

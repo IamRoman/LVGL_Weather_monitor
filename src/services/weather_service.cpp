@@ -358,7 +358,15 @@ bool weather_update(WeatherData &data, double lat, double lon)
 
 	client.stop();
 	Serial.println("Weather updated OK");
-	get_NOAA_weather(data);
 
 	return true;
+}
+
+bool weather_update_all(WeatherData &data, double lat, double lon)
+{
+	bool ok = weather_update(data, lat, lon);
+
+	get_NOAA_weather(data);
+
+	return ok;
 }

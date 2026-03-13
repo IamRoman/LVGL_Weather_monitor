@@ -44,3 +44,4 @@ struct WeatherData
 
 void weather_time_init(); // NTP
 bool weather_update(WeatherData &data, double lat, double lon);
+bool weather_update_all(WeatherData &data, double lat, double lon);
