@@ -133,7 +133,7 @@ weather_chart_t *create_weather_chart(lv_obj_t *parent)
   // lv_obj_center(wc->chart);
 
   lv_chart_set_type(wc->chart, LV_CHART_TYPE_SCATTER);
-  lv_chart_set_range(wc->chart, LV_CHART_AXIS_PRIMARY_Y, -40, 80);
+  lv_chart_set_range(wc->chart, LV_CHART_AXIS_PRIMARY_Y, -100, 160);
   lv_chart_set_range(wc->chart, LV_CHART_AXIS_PRIMARY_X, 0, 21);
 
   // lv_obj_set_style_bg_color(wc->chart, COLOR_BG_DARK, 0);

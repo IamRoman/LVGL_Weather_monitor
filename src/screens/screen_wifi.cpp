@@ -4,12 +4,17 @@
 #include <circular_chart.h>
 #include <back_button.h>
 #include <screen_settings.h>
+#include <config_service.h>
+
+extern void start_weather_update(void);
 
 static lv_obj_t *screen;
 
 static lv_obj_t *wifi_list;
 static lv_obj_t *password_ta;
 static char selected_ssid[33];
+// static String selected_ssid;
+char *selected_ssid_copy = nullptr;
 static lv_timer_t *wifi_timer;
 static lv_style_t style_secondary_label;
 
@@ -56,8 +61,12 @@ static void connect_wifi_event(lv_event_t *e)
   const char *pass = lv_textarea_get_text(password_ta);
   Serial.printf("Connecting to %s\n", selected_ssid);
   WiFi.begin(selected_ssid, pass);
+  config_set_wifi(selected_ssid, pass);
+
   lv_obj_delete(wifi_popup);
   lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
+
+  lv_screen_load(screen_dashboard_get());
 }
 
 static void cancel_connect_wifi_event(lv_event_t *e)
@@ -156,10 +165,18 @@ static void show_password_dialog(const char *ssid)
 
 static void wifi_item_event(lv_event_t *e)
 {
-  lv_obj_t *btn = (lv_obj_t *)lv_event_get_target(e);
-  const char *txt = lv_list_get_button_text(wifi_list, btn);
+  char *ssid = (char *)lv_event_get_user_data(e);
+  if (!ssid)
+    return;
+  if (selected_ssid_copy)
+    free(selected_ssid_copy);
 
-  show_password_dialog(txt);
+  selected_ssid_copy = ssid;
+  // Copy to an array and provide a null terminator
+  strncpy(selected_ssid, selected_ssid_copy, sizeof(selected_ssid) - 1);
+  selected_ssid[sizeof(selected_ssid) - 1] = '\0';
+
+  show_password_dialog(selected_ssid);
   lv_obj_add_state(password_ta, LV_STATE_FOCUSED);
   lv_obj_remove_flag(kb, LV_OBJ_FLAG_HIDDEN);
 }
@@ -198,15 +215,17 @@ void wifi_scan_task()
     for (int i = 0; i < n; i++)
     {
       char buf[64];
+      String ss = WiFi.SSID(i);
+      char *ssid_copy = strdup(ss.c_str());
 
       sprintf(
           buf,
           "%s (%d dBm)",
-          WiFi.SSID(i).c_str(),
+          ssid_copy,
           WiFi.RSSI(i));
 
       lv_obj_t *btn_item = lv_list_add_button(wifi_list, LV_SYMBOL_WIFI, buf);
-      lv_obj_add_event_cb(btn_item, wifi_item_event, LV_EVENT_CLICKED, NULL);
+      lv_obj_add_event_cb(btn_item, wifi_item_event, LV_EVENT_CLICKED, ssid_copy);
       lv_obj_set_style_bg_opa(btn_item, LV_OPA_TRANSP, 0);
       lv_obj_set_style_text_color(btn_item, WHITE, 0);
     }

@@ -15,20 +15,32 @@ static const char *API_KEY = "d0e4132a4b555118a94675b394ef386f";
 /* =========================
 	 NTP INIT (once)
 	 ========================= */
+void ntp_worker(void *pv)
+{
+	struct tm timeinfo;
+	int retry = 0;
+
+	while (retry < 10)
+	{
+		if (getLocalTime(&timeinfo))
+		{
+			Serial.println("NTP time OK");
+			break;
+		}
+		retry++;
+		vTaskDelay(500 / portTICK_PERIOD_MS);
+	}
+
+	vTaskDelete(NULL);
+}
+
 void weather_time_init()
 {
 	configTzTime("EET-2EEST,M3.5.0/3,M10.5.0/4",
 							 "pool.ntp.org",
 							 "time.nist.gov");
 
-	struct tm timeinfo;
-	int retry = 0;
-
-	while (!getLocalTime(&timeinfo) && retry < 10)
-	{
-		delay(500);
-		retry++;
-	}
+	xTaskCreate(ntp_worker, "ntp_worker", 4096, NULL, 1, NULL);
 }
 
 // ==========================
