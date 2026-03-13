@@ -3,6 +3,7 @@
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <time.h>
+#include "secrets.h"
 
 #define OWM_HOST "api.openweathermap.org"
 #define OWM_PORT 443
@@ -10,7 +11,7 @@
 #define NOAA_HOST "services.swpc.noaa.gov"
 #define NOAA_PORT 443
 
-static const char *API_KEY = "d0e4132a4b555118a94675b394ef386f";
+// static const char *API_KEY = "d0e4132a4b555118a94675b394ef386f";
 
 /* =========================
 	 NTP INIT (once)
@@ -185,7 +186,7 @@ bool weather_update(WeatherData &data, double lat, double lon)
 	url += "&lon=";
 	url += String(lon, 6);
 	url += "&appid=";
-	url += API_KEY;
+	url += OWM_API_KEY;
 	url += "&units=metric";
 
 	Serial.print("url: ");
